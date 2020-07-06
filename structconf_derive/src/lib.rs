@@ -1,30 +1,11 @@
 extern crate proc_macro;
+mod opt;
+
+use crate::opt::Opt;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{
-    parse::Error, parse_str, Attribute, Data, DataStruct, DeriveInput, Expr,
-    Field, FieldsNamed, Type,
-};
-
-// An argument option may contain a long name, a short name, or both.
-struct OptArgData {
-    long: Option<String>,
-    short: Option<String>,
-    help: String,
-}
-
-struct OptFileData {
-    section: String,
-}
-
-struct Opt {
-    name: proc_macro2::Ident,
-    ty: Type,
-    default: Option<String>,
-    file: Option<OptFileData>,
-    arg: Option<OptArgData>,
-}
+use syn::{parse::Error, Data, DataStruct, DeriveInput, FieldsNamed};
 
 #[proc_macro_derive(StructConf, attributes(conf))]
 pub fn derive_conf(input: TokenStream) -> TokenStream {
@@ -56,23 +37,27 @@ fn impl_conf_macro(
 ) -> Result<TokenStream, Error> {
     let name = &input.ident;
     let new_fields = fields.named.iter().map(|f| {
-        let data = parse_conf(f);
-        let name = data.name;
-        // TODO: shouldn't unwrap
-        let section = data.file.and_then(|x| Some(x.section)).unwrap_or(String::from("Defaults"));
-        let ty = data.ty;
-        let default = match data.default {
-            Some(expr) => {
-                // TODO: shouldn't unwrap
-                let expr = parse_str::<Expr>(&expr).unwrap();
-                quote! { #expr }
-            }
-            None => quote! { ::std::default::Default::default() }
+        let Opt { name, ty, default, file, .. } = Opt::parse(f);
+        // If there's no data for the config file, it won't be taken into
+        // account at all. Otherwise, the section in which the option resides
+        // may be specified, having "Defaults" as the fallback.
+        let check_conf = match file {
+            Some(file) => {
+                let s = file.section;
+                quote! {
+                    .or_else(|| file.get_from(Some(#s), stringify!(#name)))
+                }
+            },
+            None => quote! {}
         };
 
+        // This first check the value obtained by the argument parser. If that
+        // fails, it will check the value from the config file.
+        // If any of these existed, they are parsed into the required type
+        // (this must succeed). Otherwise, it's assigned the default value.
         quote! {
             #name: args.value_of(stringify!(#name))
-                .or_else(|| file.get_from(Some(#section), stringify!(#name)))
+                #check_conf
                 .and_then(|x| {
                     Some(x.parse::<#ty>().expect(&format!(
                         "The value for '{}' is invalid in the configuration: '{}'",
@@ -87,7 +72,7 @@ fn impl_conf_macro(
     // let new_fields = vec![quote! { debug: true }, quote! { value: 213 } ];
     // println!("DUMMY : : : :{:#?}", &new_fields);
 
-    let gen = quote! {
+    Ok(quote! {
         impl StructConf for #name {
             fn new() -> std::sync::RwLock<#name> {
                 let args = parse_args();
@@ -135,81 +120,5 @@ fn impl_conf_macro(
             // All the available options as arguments.
             app.args(&[]).get_matches()
         }
-    };
-
-    Ok(gen.into())
-}
-
-fn parse_conf(f: &Field) -> Opt {
-    // Obtains metadata from the single `#[conf(...)]` attribute.
-    let attr: Option<&Attribute> = f.attrs.iter().find(|a| {
-        a.path.segments.len() == 1 && a.path.segments[0].ident == "conf"
-    });
-
-    let get_val = |name, weak| {
-        attr.and_then(|attr| Opt::get_group_value(attr, name, weak))
-    };
-
-    Opt {
-        // TODO: avoid cloning and investigate unwrap
-        name: f.clone().ident.unwrap(),
-        ty: f.clone().ty,
-        default: get_val("default", false),
-        file: {
-            let section = get_val("section", false);
-            if section.is_none() {
-                None
-            } else {
-                Some(OptFileData {
-                    section: section.unwrap(),
-                })
-            }
-        },
-        arg: {
-            let long = get_val("long", true)
-                .and_then(|x| Some(OptArgData::get_long(&x)));
-            let short = get_val("short", true)
-                .and_then(|x| Some(OptArgData::get_short(&x)));
-
-            if long.is_none() && short.is_none() {
-                None
-            } else {
-                Some(OptArgData {
-                    long,
-                    short,
-                    help: get_val("help", false).unwrap_or(String::from("")),
-                })
-            }
-        },
-    }
-}
-
-impl OptArgData {
-    fn get_long(name: &str) -> String {
-        format!("--{}", name.replace("_", "-"))
-    }
-
-    fn get_short(name: &str) -> String {
-        // Unwrap should never fail because empty names don't make sense
-        format!("-{}", name.chars().next().unwrap())
-    }
-}
-
-impl Opt {
-    // Obtains the vlaue in an attribute with syntax `key = "value"`. In case
-    // it's just `key` and `weak` is true, the returned value will be empty.
-    fn get_group_value(
-        attr: &Attribute,
-        key: &str,
-        weak: bool,
-    ) -> Option<String> {
-        // if let Some(proc_macro2::TokenTree::Group(g)) = attr.tts.clone().into_iter().next() {
-        // let mut tokens = g.stream().into_iter();
-
-        // Some(String::from("fck"))
-        // } else {
-        // None
-        // }
-        Some(String::from("true"))
-    }
+    }.into())
 }
