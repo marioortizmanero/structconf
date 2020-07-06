@@ -2,14 +2,16 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse::Error, Data, DataStruct, DeriveInput, Field, FieldsNamed,
-          Attribute, Type, parse_str, Expr};
+use syn::{
+    parse::Error, parse_str, Attribute, Data, DataStruct, DeriveInput, Expr,
+    Field, FieldsNamed, Type,
+};
 
 // An argument option may contain a long name, a short name, or both.
 struct OptArgData {
     long: Option<String>,
     short: Option<String>,
-    help: String
+    help: String,
 }
 
 struct OptFileData {
@@ -21,7 +23,7 @@ struct Opt {
     ty: Type,
     default: Option<String>,
     file: Option<OptFileData>,
-    arg: Option<OptArgData>
+    arg: Option<OptArgData>,
 }
 
 #[proc_macro_derive(StructConf, attributes(conf))]
@@ -32,17 +34,26 @@ pub fn derive_conf(input: TokenStream) -> TokenStream {
 
     // Build the trait implementation
     let result: Result<TokenStream, Error> = match &ast.data {
-        Data::Struct(DataStruct{fields: syn::Fields::Named(named), ..}) => impl_conf_macro(&ast, &named),
-        _ => Err(Error::new(ast.ident.span(), "cannot derive Options for type")),
+        Data::Struct(DataStruct {
+            fields: syn::Fields::Named(named),
+            ..
+        }) => impl_conf_macro(&ast, &named),
+        _ => Err(Error::new(
+            ast.ident.span(),
+            "cannot derive Options for type",
+        )),
     };
 
     match result {
         Ok(tokens) => tokens.into(),
-        Err(e) => e.to_compile_error().into()
+        Err(e) => e.to_compile_error().into(),
     }
 }
 
-fn impl_conf_macro(input: &DeriveInput, fields: &FieldsNamed) -> Result<TokenStream, Error> {
+fn impl_conf_macro(
+    input: &DeriveInput,
+    fields: &FieldsNamed,
+) -> Result<TokenStream, Error> {
     let name = &input.ident;
     let new_fields = fields.named.iter().map(|f| {
         let data = parse_conf(f);
@@ -76,8 +87,7 @@ fn impl_conf_macro(input: &DeriveInput, fields: &FieldsNamed) -> Result<TokenStr
     // let new_fields = vec![quote! { debug: true }, quote! { value: 213 } ];
     // println!("DUMMY : : : :{:#?}", &new_fields);
 
-
-    let gen = quote!{
+    let gen = quote! {
         impl StructConf for #name {
             fn new() -> std::sync::RwLock<#name> {
                 let args = parse_args();
@@ -136,7 +146,9 @@ fn parse_conf(f: &Field) -> Opt {
         a.path.segments.len() == 1 && a.path.segments[0].ident == "conf"
     });
 
-    let get_val = |name, weak| attr.and_then(|attr| Opt::get_group_value(attr, name, weak));
+    let get_val = |name, weak| {
+        attr.and_then(|attr| Opt::get_group_value(attr, name, weak))
+    };
 
     Opt {
         // TODO: avoid cloning and investigate unwrap
@@ -149,13 +161,15 @@ fn parse_conf(f: &Field) -> Opt {
                 None
             } else {
                 Some(OptFileData {
-                    section: section.unwrap()
+                    section: section.unwrap(),
                 })
             }
         },
         arg: {
-            let long = get_val("long", true).and_then(|x| Some(OptArgData::get_long(&x)));
-            let short = get_val("short", true).and_then(|x| Some(OptArgData::get_short(&x)));
+            let long = get_val("long", true)
+                .and_then(|x| Some(OptArgData::get_long(&x)));
+            let short = get_val("short", true)
+                .and_then(|x| Some(OptArgData::get_short(&x)));
 
             if long.is_none() && short.is_none() {
                 None
@@ -163,10 +177,10 @@ fn parse_conf(f: &Field) -> Opt {
                 Some(OptArgData {
                     long,
                     short,
-                    help: get_val("help", false).unwrap_or(String::from(""))
+                    help: get_val("help", false).unwrap_or(String::from("")),
                 })
             }
-        }
+        },
     }
 }
 
@@ -184,13 +198,17 @@ impl OptArgData {
 impl Opt {
     // Obtains the vlaue in an attribute with syntax `key = "value"`. In case
     // it's just `key` and `weak` is true, the returned value will be empty.
-    fn get_group_value(attr: &Attribute, key: &str, weak: bool) -> Option<String> {
+    fn get_group_value(
+        attr: &Attribute,
+        key: &str,
+        weak: bool,
+    ) -> Option<String> {
         // if let Some(proc_macro2::TokenTree::Group(g)) = attr.tts.clone().into_iter().next() {
-            // let mut tokens = g.stream().into_iter();
+        // let mut tokens = g.stream().into_iter();
 
-            // Some(String::from("fck"))
+        // Some(String::from("fck"))
         // } else {
-            // None
+        // None
         // }
         Some(String::from("true"))
     }
