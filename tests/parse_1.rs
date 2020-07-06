@@ -2,19 +2,19 @@
 
 use structconf::StructConf;
 
-#[derive(Debug, StructConf)]
-pub struct Config {
+#[derive(StructConf)]
+struct Config {
+    #[conf(section = "thing", default = "true")]
     pub debug: bool,
-    pub lyrics: bool,
-    pub fullscreen: bool,
-    pub dark_mode: bool,
+    #[conf(section = "thing", default = "1234")]
+    pub value: bool,
 }
 
 fn main() {
     let conf = Config::new();
-    println!("Debug: {}", conf.read().debug);
-    conf.write().debug = true;
-    println!("Debug: {}", conf.read().debug);
-    conf.write().debug = false;
-    println!("Debug: {}", conf.read().debug);
+    println!("Debug: {}", conf.read().unwrap().debug);
+    conf.write().unwrap().debug = true;
+    println!("Debug: {}", conf.read().unwrap().debug);
+    conf.write().unwrap().debug = false;
+    println!("Debug: {}", conf.read().unwrap().debug);
 }
