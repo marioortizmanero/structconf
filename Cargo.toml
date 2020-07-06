@@ -1,0 +1,19 @@
+[package]
+name = "structconf"
+version = "0.1.0"
+authors = ["Mario Ortiz Manero <marioortizmanero@gmail.com>"]
+edition = "2018"
+autotests = false
+
+[dependencies]
+clap = { version = "2.33.1", default-features = false, features = [ "color" ] }
+rust-ini = "0.15.3"
+dirs = "3.0.0"
+structconf_derive = { path = "structconf_derive" }
+
+[[test]]
+name = "tests"
+path = "tests/trybuild.rs"
+
+[dev-dependencies]
+trybuild = { version = "1.0", features = ["diff"] }
