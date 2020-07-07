@@ -1,4 +1,6 @@
+extern crate darling;
 extern crate proc_macro;
+
 mod opt;
 
 use crate::opt::Opt;
@@ -37,7 +39,8 @@ fn impl_conf_macro(
 ) -> Result<TokenStream, Error> {
     let name = &input.ident;
     let new_fields = fields.named.iter().map(|f| {
-        let Opt { name, ty, default, file, .. } = Opt::parse(f);
+        // TODO: remove unwrap()
+        let Opt { name, ty, default, file, .. } = Opt::parse(f).unwrap();
         // If there's no data for the config file, it won't be taken into
         // account at all. Otherwise, the section in which the option resides
         // may be specified, having "Defaults" as the fallback.
@@ -113,6 +116,7 @@ fn impl_conf_macro(
 
         fn parse_args<'a>() -> clap::ArgMatches<'a> {
             // Basic information about the program.
+            // TODO: take App as the parameter for Config::new
             let app = clap::App::new("vidify")
                 .version(clap::crate_version!())
                 .author(clap::crate_authors!());

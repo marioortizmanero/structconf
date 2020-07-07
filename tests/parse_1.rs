@@ -4,9 +4,9 @@ use structconf::StructConf;
 
 #[derive(StructConf)]
 struct Config {
-    #[conf(section = "thing", default = "true")]
+    #[conf(section = "section1", default = "true")]
     pub debug: bool,
-    #[conf(section = "thing", default = "1234")]
+    #[conf(section = "section2", default = "1234")]
     pub value: bool,
 }
 
