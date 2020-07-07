@@ -1,0 +1,51 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+      name: Upload Assets
+      runs-on: ${{ matrix.os }}
+      strategy:
+        matrix:
+          os: [ubuntu-latest, windows-latest]
+          python: [3.6]
+          include:
+            - os: ubuntu-latest
+              artifact_prefix: linux_x86_64
+            - os: windows-latest
+              artifact_prefix: win10_x86_64
+            - os: macos-latest
+              artifact_prefix: macos_x86_64
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+
+        - name: Get the tag name
+          id: tag-name
+          uses: olegtarasov/get-tag@v2
+
+        - name: Build
+          run: cargo build --verbose
+
+        - name: Uploading Release Assets
+          uses: softprops/action-gh-release@v1
+          with:
+            body: ""
+            files: dev/vidify-${{ steps.tag-name.outputs.tag }}_${{ matrix.artifact_prefix }}.zip
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  crates.io:
+      name: Upload to Crates.io
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@master
+
+        - name: Publish
+          env: ${{ secrets.CRATES_IO_TOKEN }}
+          run: cargo publish --token ${CRATES_IO_TOKEN}
