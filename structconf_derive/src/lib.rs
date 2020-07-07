@@ -74,6 +74,8 @@ fn impl_conf_macro(
 
     Ok(quote! {
         impl StructConf for #name {
+            // TODO: RwLock should not really be integrated in this library,
+            // it should be left up to the user.
             fn new() -> std::sync::RwLock<#name> {
                 let args = parse_args();
                 let file = parse_config_file(args.value_of("config_file"));
@@ -83,9 +85,16 @@ fn impl_conf_macro(
             }
 
             fn to_file(&self) {
+                // TODO
+            }
+
+            fn refresh_file(&mut self) {
+                // TODO
             }
         }
 
+        // TODO: these functions should go inside the struct itself or
+        // similars. Its visibility should be reduced.
         fn parse_config_file(path_str: Option<&str>) -> ini::Ini {
             // The path is first obtained as a `String` for output and
             let path = match path_str {
@@ -119,6 +128,7 @@ fn impl_conf_macro(
                 .author(clap::crate_authors!());
 
             // All the available options as arguments.
+            // TODO: arguments
             app.args(&[]).get_matches()
         }
     }.into())
