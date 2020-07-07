@@ -45,14 +45,12 @@ fn impl_conf_macro(
 
     Ok(quote! {
         impl StructConf for #name {
-            // TODO: RwLock should not really be integrated in this library,
-            // it should be left up to the user.
-            fn new() -> std::sync::RwLock<#name> {
-                let args = parse_args();
+            fn new<'a>(app: clap::App<'a, 'a>) -> #name {
+                let args = parse_args(app);
                 let file = parse_config_file(args.value_of("config_file"));
-                std::sync::RwLock::new(#name {
+                #name {
                     #(#new_fields,)*
-                })
+                }
             }
 
             fn to_file(&self) {
@@ -91,15 +89,7 @@ fn impl_conf_macro(
             ini::Ini::load_from_file(path).unwrap()
         }
 
-        fn parse_args<'a>() -> clap::ArgMatches<'a> {
-            // Basic information about the program.
-            // TODO: take App as the parameter for Config::new
-            let app = clap::App::new("vidify")
-                .version(clap::crate_version!())
-                .author(clap::crate_authors!());
-
-            // All the available options as arguments.
-            // TODO: arguments
+        fn parse_args<'a>(app: clap::App<'a, 'a>) -> clap::ArgMatches<'a> {
             app.args(&[
                 #(#new_args,)*
             ]).get_matches()

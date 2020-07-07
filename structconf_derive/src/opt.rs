@@ -1,5 +1,4 @@
 use darling::FromField;
-use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
 use syn::{

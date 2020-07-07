@@ -8,6 +8,7 @@ pub struct Config {
 }
 
 fn main() {
-    let conf = Config::new();
-    println!("value: {}", conf.read().unwrap().value);
+    let app = clap::App::new("test");
+    let conf = Config::new(app);
+    println!("value: {}", conf.value);
 }

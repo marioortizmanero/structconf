@@ -11,11 +11,12 @@ struct Config {
 }
 
 fn main() {
-    let conf = Config::new();
+    let app = clap::App::new("test");
+    let mut conf = Config::new(app);
 
-    println!("Debug: {}", conf.read().unwrap().debug);
-    conf.write().unwrap().debug = true;
-    println!("Debug: {}", conf.read().unwrap().debug);
-    conf.write().unwrap().debug = false;
-    println!("Debug: {}", conf.read().unwrap().debug);
+    println!("Debug: {}", conf.debug);
+    conf.debug = true;
+    println!("Debug: {}", conf.debug);
+    conf.debug = false;
+    println!("Debug: {}", conf.debug);
 }
