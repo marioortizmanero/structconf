@@ -38,39 +38,10 @@ fn impl_conf_macro(
     fields: &FieldsNamed,
 ) -> Result<TokenStream, Error> {
     let name = &input.ident;
-    let new_fields = fields.named.iter().map(|f| {
-        // TODO: remove unwrap()
-        let Opt { name, ty, default, file, .. } = Opt::parse(f).unwrap();
-        // If there's no data for the config file, it won't be taken into
-        // account at all. Otherwise, the section in which the option resides
-        // may be specified, having "Defaults" as the fallback.
-        let check_conf = match file {
-            Some(file) => {
-                let s = file.section;
-                quote! {
-                    .or_else(|| file.get_from(Some(#s), stringify!(#name)))
-                }
-            },
-            None => quote! {}
-        };
-
-        // This first check the value obtained by the argument parser. If that
-        // fails, it will check the value from the config file.
-        // If any of these existed, they are parsed into the required type
-        // (this must succeed). Otherwise, it's assigned the default value.
-        quote! {
-            #name: args.value_of(stringify!(#name))
-                #check_conf
-                .and_then(|x| {
-                    Some(x.parse::<#ty>().expect(&format!(
-                        "The value for '{}' is invalid in the configuration: '{}'",
-                        stringify!(#name),
-                        x
-                    )))
-                })
-                .unwrap_or(#default)
-        }
-    });
+    // TODO remove unwrap
+    let options: Vec<Opt> = fields.named.iter().map(|f| Opt::parse(f).unwrap()).collect();
+    let new_fields = options.iter().map(|opt| opt.parse_field_init());
+    let new_args = options.iter().map(|opt| opt.parse_arg_init());
 
     Ok(quote! {
         impl StructConf for #name {
@@ -129,7 +100,9 @@ fn impl_conf_macro(
 
             // All the available options as arguments.
             // TODO: arguments
-            app.args(&[]).get_matches()
+            app.args(&[
+                #(#new_args,)*
+            ]).get_matches()
         }
     }.into())
 }

@@ -1,4 +1,5 @@
 use darling::FromField;
+use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
 use syn::{
@@ -25,13 +26,13 @@ pub struct Opt {
 }
 
 impl OptArgData {
-    pub fn get_long(name: &str) -> String {
-        format!("--{}", name.replace("_", "-"))
+    pub fn get_long(name: Ident) -> String {
+        format!("--{}", name.to_string().replace("_", "-"))
     }
 
-    pub fn get_short(name: &str) -> String {
+    pub fn get_short(name: Ident) -> String {
         // Unwrap should never fail because empty names don't make sense
-        format!("-{}", name.chars().next().unwrap())
+        format!("-{}", name.to_string().chars().next().unwrap())
     }
 }
 
@@ -136,28 +137,92 @@ impl Opt {
     ) -> Result<Option<OptArgData>, Error> {
         // The long or short values may be empty, meaning that the
         // value should be converted from the field name.
-        // TODO: Improve checks to include no_long and such
-        // The option is only available in the argument parser if
-        // a `long` or `short` name is indicated, or both.
-        if attr.long.is_some() || attr.short.is_some() {
-            Ok(Some(OptArgData {
-                // TODO: clone may be unnecessary
-                long: attr
-                    .long
-                    .clone()
-                    .and_then(|x| Some(OptArgData::get_long(&x))),
-                short: attr
-                    .short
-                    .clone()
-                    .and_then(|x| Some(OptArgData::get_short(&x))),
-                help: attr.help.clone().unwrap_or_default(),
-            }))
-        } else {
+        // TODO: check conflicting attributes
+        if attr.no_long && attr.no_short {
             if attr.help.is_some() {
                 Err(unexpected_item(span, "help", "arg"))
             } else {
                 Ok(None)
             }
+        } else {
+            // TODO clone may be unnecessary?
+            let long: Option<String> = if attr.no_long {
+                None
+            } else {
+                Some(attr.long.clone().unwrap_or_else(|| {
+                    OptArgData::get_long(attr.ident.clone().unwrap())
+                }))
+            };
+
+            let short = if attr.no_short {
+                None
+            } else {
+                Some(attr.short.clone().unwrap_or_else(|| {
+                    OptArgData::get_short(attr.ident.clone().unwrap())
+                }))
+            };
+
+            Ok(Some(OptArgData {
+                long,
+                short,
+                help: attr.help.clone().unwrap_or_default(),
+            }))
         }
+    }
+
+    pub fn parse_field_init(&self) -> proc_macro2::TokenStream {
+        let Opt { name, ty, default, file, .. } = self;
+        // If there's no data for the config file, it won't be taken into
+        // account at all. Otherwise, the section in which the option resides
+        // may be specified, having "Defaults" as the fallback.
+        let conf_file = file.as_ref().and_then(|f| {
+            let section = f.section.as_str();
+            Some(quote! {
+                .or_else(|| file.get_from(Some(#section), stringify!(#name)))
+            })
+        }).unwrap_or_default();
+
+        // This first check the value obtained by the argument parser. If that
+        // fails, it will check the value from the config file.
+        // If any of these existed, they are parsed into the required type
+        // (this must succeed). Otherwise, it's assigned the default value.
+        quote! {
+            #name: args.value_of(stringify!(#name))
+                #conf_file
+                .and_then(|x| {
+                    Some(x.parse::<#ty>().expect(&format!(
+                        "The value for '{}' is invalid in the configuration: '{}'",
+                        stringify!(#name),
+                        x
+                    )))
+                })
+                .unwrap_or(#default)
+        }
+    }
+
+    pub fn parse_arg_init(&self) -> proc_macro2::TokenStream {
+        // In case it's not an argument, an empty TokenStream will be
+        // returned.
+        self.arg.as_ref().and_then(|data| {
+            let name = self.name.to_string();
+            let OptArgData { long, short, help } = data;
+
+            let long = long.as_ref().and_then(|name| Some(quote! {
+                .long(#name)
+            })).unwrap_or_default();
+
+            let short = short.as_ref().and_then(|name| Some(quote! {
+                .short(#name)
+            })).unwrap_or_default();
+
+            let init = quote! {
+                clap::Arg::with_name(#name)
+                    #long
+                    #short
+                    .help(#help)
+            };
+
+            init.into()
+        }).unwrap_or_default()
     }
 }

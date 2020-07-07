@@ -4,9 +4,10 @@ use structconf::StructConf;
 
 #[derive(StructConf)]
 pub struct Config {
-    _value: bool
+    value: bool
 }
 
 fn main() {
-    let _conf = Config::new();
+    let conf = Config::new();
+    println!("value: {}", conf.read().unwrap().value);
 }

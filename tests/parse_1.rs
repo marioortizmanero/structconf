@@ -4,14 +4,15 @@ use structconf::StructConf;
 
 #[derive(StructConf)]
 struct Config {
-    #[conf(section = "section1", default = "true")]
+    #[conf(default = "true", section = "thing")]
     pub debug: bool,
-    #[conf(section = "section2", default = "1234")]
+    #[conf(default = true)]
     pub value: bool,
 }
 
 fn main() {
     let conf = Config::new();
+
     println!("Debug: {}", conf.read().unwrap().debug);
     conf.write().unwrap().debug = true;
     println!("Debug: {}", conf.read().unwrap().debug);
