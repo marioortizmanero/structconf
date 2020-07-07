@@ -48,57 +48,39 @@ fn impl_conf_macro(
     let new_fields = parse_field_init(&options);
     let new_args = parse_args_init(&options);
     let to_file = parse_to_file(&options);
+    let conf_path = parse_conf_path(&options);
 
     Ok(quote! {
-        struct ConfWrapper {
-            val: #name,
-            path: String
-        }
+        impl #name  {
+            pub fn new<'a>(
+                app: clap::App<'a, 'a>,
+                default_conf_path: &str
+            ) -> #name {
+                let args = #name::parse_args(app);
+                // TODO should be saved into 'self'
+                let conf_path = #conf_path;
+                let file = #name::parse_config_file(conf_path);
 
-        const _: () = {
-            impl From<#name> for $crate::ConfWrapper {
-                fn from(data: #name) -> Self {
-                    ConfWrapper {
-                        
-                    }
+                #name {
+                    #(#new_fields,)*
                 }
             }
 
-            impl StructConf for $crate::ConfWrapper {
-                fn new<'a>(app: clap::App<'a, 'a>) -> #name {
-                    let args = parse_args(app);
-                    let file = parse_config_file(args.value_of("config_file"));
-                    #name {
-                        #(#new_fields,)*
-                    }
-                }
+            pub fn to_file(&self) {
+                let mut conf = ini::Ini::new();
+                #(#to_file)*
+                conf.write_to_file("...").unwrap();
+            }
 
-                fn to_file(&self) {
-                    let mut conf = ini::Ini::new();
-                    #(#to_file)*
-                    conf.write_to_file("...").unwrap();
-                }
-
-                fn refresh_file(&mut self) {
-                    // TODO
-                }
+            pub fn refresh_file(&mut self) {
+                // TODO
             }
 
             // TODO: these functions should go inside the struct itself or
             // similars. Its visibility should be reduced.
-            fn parse_config_file(path_str: Option<&str>) -> ini::Ini {
-                // The path is first obtained as a `String` for output and
-                let path = match path_str {
-                    Some(path) => std::path::PathBuf::from(path),
-                    None => {
-                        let mut path = dirs::config_dir()
-                            .expect("Could not find user config directory");
-                        path.extend(["vidify", "config.ini"].iter());
-                        path
-                    }
-                };
-
-                // Checking that the config file exists, and creating it otherwise.
+            fn parse_config_file(path: std::path::PathBuf) -> ini::Ini {
+                // Checking that the config file exists, and creating it
+                // otherwise.
                 if !path.exists() {
                     std::fs::File::create(&path)
                         .expect("Could not create config file");
@@ -164,7 +146,7 @@ fn parse_args_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
                 .as_ref()
                 .and_then(|data| {
                     let name = opt.name.to_string();
-                    let OptArgData { long, short, help } = data;
+                    let OptArgData { long, short, help, .. } = data;
 
                     let long = long
                         .as_ref()
@@ -196,6 +178,36 @@ fn parse_args_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
                 .unwrap_or_default()
         })
         .collect()
+}
+
+fn parse_conf_path(opts: &Vec<Opt>) -> TokenStream2 {
+    // Looks for an option with the `conf_file` attribute set.
+    let opt = opts.iter().find(|a| {
+        match &a.arg {
+            Some(arg) => arg.conf_file,
+            None => false
+        }
+    });
+
+    let default = quote! {
+        let mut path = dirs::config_dir()
+            .expect("Couldn't find user config directory");
+        path.extend(default_conf_path.split("/"));
+        path
+    };
+
+    match opt {
+        Some(Opt { name, .. }) => quote! {
+            args.value_of(stringify!(#name))
+                .and_then(std::path::PathBuf::from)
+                .unwrap_or_else(|| { #default });
+        },
+        None => quote! {
+            {
+                #default
+            };
+        }
+    }
 }
 
 fn parse_to_file(opts: &Vec<Opt>) -> Vec<TokenStream2> {

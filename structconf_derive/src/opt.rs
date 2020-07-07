@@ -10,6 +10,8 @@ pub struct OptArgData {
     pub long: Option<String>,
     pub short: Option<String>,
     pub help: String,
+    pub conf_file: bool,
+    pub inverted: bool,
 }
 
 pub struct OptFileData {
@@ -64,6 +66,8 @@ struct BasicOptAttrs {
     #[darling(default)]
     arg_inverted: bool,
     #[darling(default)]
+    conf_file: bool,
+    #[darling(default)]
     no_file: bool,
     #[darling(default)]
     file: Option<String>,
@@ -112,9 +116,7 @@ impl Opt {
         span: Span,
         attr: &BasicOptAttrs,
     ) -> Result<Option<OptFileData>, Error> {
-        // The option is only available in the config file if the
-        // `file` parameter is used.
-        if attr.no_file {
+        if attr.no_file || attr.conf_file {
             if attr.section.is_some() {
                 Err(unexpected_item(span, "section", "non-config-file"))
             } else {
@@ -136,7 +138,7 @@ impl Opt {
     ) -> Result<Option<OptArgData>, Error> {
         // The long or short values may be empty, meaning that the
         // value should be converted from the field name.
-        // TODO: check conflicting attributes
+        // TODO: check conflicting attributes, also checks for conf_file
         if attr.no_long && attr.no_short {
             if attr.help.is_some() {
                 Err(unexpected_item(span, "help", "arg"))
@@ -165,6 +167,8 @@ impl Opt {
                 long,
                 short,
                 help: attr.help.clone().unwrap_or_default(),
+                inverted: attr.arg_inverted,
+                conf_file: attr.conf_file
             }))
         }
     }
