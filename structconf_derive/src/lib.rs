@@ -71,9 +71,6 @@ fn impl_conf_macro(
                 .unwrap_or(#default)
         }
     });
-    // println!("ORIGINAL : : : :{:#?}", &new_fields.collect::<Vec<_>>());
-    // let new_fields = vec![quote! { debug: true }, quote! { value: 213 } ];
-    // println!("DUMMY : : : :{:#?}", &new_fields);
 
     Ok(quote! {
         impl StructConf for #name {

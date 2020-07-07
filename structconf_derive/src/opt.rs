@@ -1,7 +1,9 @@
+use darling::FromField;
 use proc_macro2::Span;
 use quote::quote;
-use syn::{parse::Error, Ident, Type, Field, parse_str, Expr, spanned::Spanned};
-use darling::FromField;
+use syn::{
+    parse::Error, parse_str, spanned::Spanned, Expr, Field, Ident, Type,
+};
 
 pub struct OptArgData {
     // An argument option may contain a long name, a short name, or both.
@@ -35,7 +37,7 @@ impl OptArgData {
 
 // TODO: may be unnecessary
 // fn missing_attr(span: Span) -> Error {
-	// Error::new(span, "No attribute 'conf' provided")
+//     Error::new(span, "No attribute 'conf' provided")
 // }
 
 fn unexpected_item(span: Span, item: &str, ty: &str) -> Error {
@@ -71,23 +73,23 @@ struct BasicOptAttrs {
 
 impl Opt {
     pub fn parse(f: &Field) -> Result<Opt, Error> {
-		// TODO: not necessary
+        // TODO: not necessary
         // Obtains metadata from the single `#[conf(...)]` attribute, which
-		// is mandatory to reduce ambiguity.
+        // is mandatory to reduce ambiguity.
         // let attr = f.attrs.iter().find(|a| {
-            // a.path.segments.len() == 1 && a.path.segments[0].ident == "conf"
+        //     a.path.segments.len() == 1 && a.path.segments[0].ident == "conf"
         // }).ok_or(missing_attr(f.span()))?;
 
-		// TODO: propagate instead of unwrap()
-		let data = BasicOptAttrs::from_field(f).unwrap();
-		let span = f.span();
+        // TODO: propagate instead of unwrap()
+        let data = BasicOptAttrs::from_field(f).unwrap();
+        let span = f.span();
 
         Ok(Opt {
-			name: data.ident.clone().unwrap(),
-			ty: data.ty.clone(),
+            name: data.ident.clone().unwrap(),
+            ty: data.ty.clone(),
             default: Opt::parse_default(&data),
             file: Opt::parse_file(span, &data)?,
-            arg: Opt::parse_arg(span, &data)?
+            arg: Opt::parse_arg(span, &data)?,
         })
     }
 
@@ -100,18 +102,24 @@ impl Opt {
                 let expr = parse_str::<Expr>(&expr).unwrap();
                 quote! { #expr }
             }
-            None => quote! { ::std::default::Default::default() }
-        }.into()
+            None => quote! { ::std::default::Default::default() },
+        }
+        .into()
     }
 
-    fn parse_file(span: Span, attr: &BasicOptAttrs) -> Result<Option<OptFileData>, Error> {
+    fn parse_file(
+        span: Span,
+        attr: &BasicOptAttrs,
+    ) -> Result<Option<OptFileData>, Error> {
         // The option is only available in the config file if the
         // `file` parameter is used.
         if let Some(_) = attr.file {
             Ok(Some(OptFileData {
                 // TODO: clone may be unnecessary
-                section: attr.section.clone()
-                    .unwrap_or(String::from("Defaults"))
+                section: attr
+                    .section
+                    .clone()
+                    .unwrap_or(String::from("Defaults")),
             }))
         } else {
             if attr.section.is_some() {
@@ -122,7 +130,10 @@ impl Opt {
         }
     }
 
-    fn parse_arg(span: Span, attr: &BasicOptAttrs) -> Result<Option<OptArgData>, Error> {
+    fn parse_arg(
+        span: Span,
+        attr: &BasicOptAttrs,
+    ) -> Result<Option<OptArgData>, Error> {
         // The long or short values may be empty, meaning that the
         // value should be converted from the field name.
         // TODO: Improve checks to include no_long and such
@@ -131,12 +142,15 @@ impl Opt {
         if attr.long.is_some() || attr.short.is_some() {
             Ok(Some(OptArgData {
                 // TODO: clone may be unnecessary
-                long: attr.long.clone()
+                long: attr
+                    .long
+                    .clone()
                     .and_then(|x| Some(OptArgData::get_long(&x))),
-                short: attr.short.clone()
+                short: attr
+                    .short
+                    .clone()
                     .and_then(|x| Some(OptArgData::get_short(&x))),
-                help: attr.help.clone()
-                    .unwrap_or_default()
+                help: attr.help.clone().unwrap_or_default(),
             }))
         } else {
             if attr.help.is_some() {
