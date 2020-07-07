@@ -5,9 +5,9 @@ use structconf::StructConf;
 
 #[derive(Debug, StructConf)]
 pub struct Config {
-    #[conf(file, long, help = "thing")]
+    #[conf(help = "thing")]
     pub debug: bool,
-    #[conf(long, help = "thing")]
+    #[conf(conf_file, help = "thing")]
     pub config_file: String,
     #[conf(short = "n", long = "no-lyrics", arg_inverted = "true",
            help = "thing", default = "true")]
