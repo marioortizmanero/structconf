@@ -11,14 +11,14 @@ rust-ini = "0.15.3"
 dirs = "3.0.0"
 structconf_derive = { path = "structconf_derive" }
 
-[[test]]
-name = "tests"
-path = "tests/trybuild.rs"
+# [[test]]
+# name = "tests"
+# path = "tests/trybuild.rs"
 
 # For `cargo expand` debugging
-# [[test]]
-# name = "parse_0"
-# path = "tests/parse_0.rs"
+[[test]]
+name = "parse_0"
+path = "tests/parse_0.rs"
 
 [dev-dependencies]
 trybuild = { version = "1.0", features = ["diff"] }

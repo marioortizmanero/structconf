@@ -4,7 +4,7 @@ use structconf::StructConf;
 
 #[derive(StructConf)]
 pub struct Config {
-    value: bool
+    value: bool,
 }
 
 fn main() {
