@@ -79,7 +79,19 @@
 pub use structconf_derive::StructConf;
 
 pub trait StructConf {
-    fn new(app: clap::App) -> Self;
-    fn to_file(&self);
-    fn refresh_file(&mut self);
+    /// Instantiate the structure from both the argument parser and the
+    /// config file. This can also be done in two steps with `parse_args`
+    /// and `parse_config`, which makes it possible to have an argument
+    /// with the config file path.
+    fn parse(app: clap::App, path: &str) -> Self;
+    /// Parses only the arguments with clap.
+    fn parse_args<'a>(app: clap::App<'a, 'a>) -> clap::ArgMatches<'a>;
+    /// With the argument matches returned by `parse_args`, the config
+    /// file is read, and the struct is constructed with the default values
+    /// taken into account.
+    ///
+    /// This also serves as a function to refresh the config file values.
+    fn parse_file(args: clap::ArgMatches, path: &str) -> Self;
+    /// Writes *all* the config file options into a file.
+    fn write_file(&self, path: &str);
 }

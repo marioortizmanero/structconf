@@ -48,56 +48,47 @@ fn impl_conf_macro(
     let new_fields = parse_field_init(&options);
     let new_args = parse_args_init(&options);
     let to_file = parse_to_file(&options);
-    let conf_path = parse_conf_path(&options);
 
     Ok(quote! {
-        impl #name  {
-            pub fn new<'a>(
-                app: clap::App<'a, 'a>,
-                default_conf_path: &str
-            ) -> #name {
+        impl StructConf for #name {
+            fn parse(app: clap::App, path: &str) -> #name {
                 let args = #name::parse_args(app);
-                // TODO should be saved into 'self'
-                let conf_path = #conf_path;
-                let file = #name::parse_config_file(conf_path);
+                #name::parse_file(args, path)
+            }
 
+            fn parse_args<'a>(
+                app: clap::App<'a, 'a>
+            ) -> clap::ArgMatches<'a> {
+                app.args(&[
+                    #(#new_args,)*
+                ]).get_matches()
+            }
+
+            fn parse_file(
+                args: clap::ArgMatches,
+                path: &str
+            ) -> #name {
+                // Checking that the config file exists, and creating it
+                // otherwise.
+                //
+                // TODO: a fail should return an err, not panic.
+                let path_wrap = std::path::Path::new(path);
+                if !path_wrap.exists() {
+                    std::fs::File::create(&path_wrap)
+                        .expect("Could not create config file");
+                    println!("Created config file at {}", path);
+                }
+
+                let file = ini::Ini::load_from_file(path).unwrap();
                 #name {
                     #(#new_fields,)*
                 }
             }
 
-            pub fn to_file(&self) {
+            fn write_file(&self, path: &str) {
                 let mut conf = ini::Ini::new();
                 #(#to_file)*
-                conf.write_to_file("...").unwrap();
-            }
-
-            pub fn refresh_file(&mut self) {
-                // TODO
-            }
-
-            // TODO: these functions should go inside the struct itself or
-            // similars. Its visibility should be reduced.
-            fn parse_config_file(path: std::path::PathBuf) -> ini::Ini {
-                // Checking that the config file exists, and creating it
-                // otherwise.
-                if !path.exists() {
-                    std::fs::File::create(&path)
-                        .expect("Could not create config file");
-                    println!(
-                        "Created config file at {}",
-                        path.to_str().expect(
-                            "Invalid UTF-8 characters found in the config path"
-                        )
-                    );
-                }
-                ini::Ini::load_from_file(path).unwrap()
-            }
-
-            fn parse_args<'a>(app: clap::App<'a, 'a>) -> clap::ArgMatches<'a> {
-                app.args(&[
-                    #(#new_args,)*
-                ]).get_matches()
+                conf.write_to_file(path).unwrap();
             }
         }
     }
@@ -178,36 +169,6 @@ fn parse_args_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
                 .unwrap_or_default()
         })
         .collect()
-}
-
-fn parse_conf_path(opts: &Vec<Opt>) -> TokenStream2 {
-    // Looks for an option with the `conf_file` attribute set.
-    let opt = opts.iter().find(|a| {
-        match &a.arg {
-            Some(arg) => arg.conf_file,
-            None => false
-        }
-    });
-
-    let default = quote! {
-        let mut path = dirs::config_dir()
-            .expect("Couldn't find user config directory");
-        path.extend(default_conf_path.split("/"));
-        path
-    };
-
-    match opt {
-        Some(Opt { name, .. }) => quote! {
-            args.value_of(stringify!(#name))
-                .and_then(std::path::PathBuf::from)
-                .unwrap_or_else(|| { #default });
-        },
-        None => quote! {
-            {
-                #default
-            };
-        }
-    }
 }
 
 fn parse_to_file(opts: &Vec<Opt>) -> Vec<TokenStream2> {

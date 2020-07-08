@@ -9,6 +9,6 @@ pub struct Config {
 
 fn main() {
     let app = clap::App::new("test");
-    let conf = Config::new(app);
+    let conf = Config::parse(app, "test/config.ini");
     println!("value: {}", conf.value);
 }
