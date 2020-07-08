@@ -4,29 +4,16 @@
 //! example:
 //!
 //! ```rust
-//! #[structonf]
+//! use structconf::StructConf;
+//!
+//! #[derive(StructConf)]
 //! struct Config {
-//!     #[structconf(help = "enable debug mode.")]
+//!     #[conf(help = "enable debug mode.")]
 //!     pub debug: bool,
-//!     #[structconf(conf_file, no_short, help = "specify a config file.")]
+//!     #[conf(conf_file, no_short, help = "specify a config file.")]
 //!     pub config_file: String,
 //! }
 //! ```
-//!
-//! This will implement the following public functions:
-//!
-//! ```rust
-//! fn new<'a>(app: clap::App<'a, 'a>, default_conf_path: &str) -> Config;
-//! ```
-//!
-//! The `#[structconf]` attribute is required on a named `struct`. It must
-//! also be accompanied by the parameter `conf_path`, with the relative path
-//! where the config file goes by default, separated by `/`. This path will
-//! be appended to the user's config directory, given by the
-//! [dirs-rs](https://docs.rs/dirs/3.0.1/dirs/fn.config_dir.html) crate. For
-//! example, `conf_path = "myapp/conf.ini"` will result in
-//! `/home/alice/.config/myapp/conf.ini` on Linux, and
-//! `C:\Users\Alice\AppData\Roaming\myapp\conf.ini` on Windows.
 //!
 //! Additional attributes can be added to its fields to customize how they are
 //! parsed:
@@ -54,8 +41,13 @@
 //! arguments where the argument's value is inverted:
 //!
 //! ```rust
-//! #[structconf(arg_inverted, no_short, long = "--no-pancakes")]
-//! pancakes: bool
+//! use structconf::StructConf;
+//!
+//! #[derive(StructConf)]
+//! struct Bakery {
+//!     #[conf(arg_inverted, no_short, long = "--no-pancakes")]
+//!     pancakes: bool
+//! }
 //! ```
 //!
 //! If both `no_long` and `no_short` are provided, the option won't be
@@ -78,12 +70,60 @@
 
 pub use structconf_derive::StructConf;
 
+use std::io::Error as IOError;
+use ini::ini::Error as IniError;
+use std::fmt;
+
+/// Represents an error encountered during argument parsing
+#[derive(Debug)]
+pub struct Error {
+    kind: ErrorKind,
+}
+
+#[derive(Debug)]
+enum ErrorKind {
+    FailedFileRead(String),
+    FailedFileWrite(String),
+    FailedFileCreate(String),
+    UnexpectedError
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::ErrorKind::*;
+
+        match &self.kind {
+            FailedFileRead(file) => write!(f, "invalid argument to option `{}`", file),
+            FailedFileWrite(file) => write!(f, "invalid argument to option `{}`", file),
+            FailedFileCreate(file) => write!(f, "invalid argument to option `{}`", file),
+            UnexpectedError => write!(f, "unexpected error")
+        }
+    }
+}
+
+impl From<IOError> for Error {
+    fn from(_err: IOError) -> Self {
+        Error {
+            kind: ErrorKind::UnexpectedError
+        }
+    }
+}
+
+impl From<IniError> for Error {
+    fn from(_err: IniError) -> Self {
+        Error {
+            kind: ErrorKind::UnexpectedError
+        }
+    }
+}
+
 pub trait StructConf {
     /// Instantiate the structure from both the argument parser and the
     /// config file. This can also be done in two steps with `parse_args`
     /// and `parse_config`, which makes it possible to have an argument
     /// with the config file path.
-    fn parse(app: clap::App, path: &str) -> Self;
+    fn parse(app: clap::App, path: &str) -> Result<Self, Error>
+        where Self: Sized;
     /// Parses only the arguments with clap.
     fn parse_args<'a>(app: clap::App<'a, 'a>) -> clap::ArgMatches<'a>;
     /// With the argument matches returned by `parse_args`, the config
@@ -91,7 +131,8 @@ pub trait StructConf {
     /// taken into account.
     ///
     /// This also serves as a function to refresh the config file values.
-    fn parse_file(args: clap::ArgMatches, path: &str) -> Self;
+    fn parse_file(args: clap::ArgMatches, path: &str) -> Result<Self, Error>
+        where Self: Sized;
     /// Writes *all* the config file options into a file.
-    fn write_file(&self, path: &str);
+    fn write_file(&self, path: &str) -> Result<(), Error>;
 }

@@ -51,44 +51,49 @@ fn impl_conf_macro(
 
     Ok(quote! {
         impl StructConf for #name {
-            fn parse(app: clap::App, path: &str) -> #name {
+            fn parse(
+                app: ::clap::App,
+                path: &str
+            ) -> Result<#name, ::structconf::Error> where Self: Sized {
                 let args = #name::parse_args(app);
                 #name::parse_file(args, path)
             }
 
             fn parse_args<'a>(
-                app: clap::App<'a, 'a>
-            ) -> clap::ArgMatches<'a> {
+                app: ::clap::App<'a, 'a>
+            ) -> ::clap::ArgMatches<'a> {
                 app.args(&[
                     #(#new_args,)*
                 ]).get_matches()
             }
 
             fn parse_file(
-                args: clap::ArgMatches,
+                args: ::clap::ArgMatches,
                 path: &str
-            ) -> #name {
+            ) -> Result<#name, ::structconf::Error> where Self: Sized {
                 // Checking that the config file exists, and creating it
                 // otherwise.
-                //
-                // TODO: a fail should return an err, not panic.
-                let path_wrap = std::path::Path::new(path);
+                let path_wrap = ::std::path::Path::new(path);
                 if !path_wrap.exists() {
-                    std::fs::File::create(&path_wrap)
-                        .expect("Could not create config file");
+                    ::std::fs::File::create(&path_wrap)?;
                     println!("Created config file at {}", path);
                 }
 
-                let file = ini::Ini::load_from_file(path).unwrap();
-                #name {
+                let file = ::ini::Ini::load_from_file(path)?;
+                Ok(#name {
                     #(#new_fields,)*
-                }
+                })
             }
 
-            fn write_file(&self, path: &str) {
-                let mut conf = ini::Ini::new();
+            fn write_file(
+                &self,
+                path: &str
+            ) -> Result<(), ::structconf::Error> {
+                let mut conf = ::ini::Ini::new();
                 #(#to_file)*
-                conf.write_to_file(path).unwrap();
+                conf.write_to_file(path)?;
+
+                Ok(())
             }
         }
     }
@@ -158,7 +163,7 @@ fn parse_args_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
                         .unwrap_or_default();
 
                     let init = quote! {
-                        clap::Arg::with_name(#name)
+                        ::clap::Arg::with_name(#name)
                             #long
                             #short
                             .help(#help)

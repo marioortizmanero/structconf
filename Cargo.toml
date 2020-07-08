@@ -19,7 +19,6 @@ path = "tests/trybuild.rs"
 # [[test]]
 # name = "parse_0"
 # path = "tests/parse_0.rs"
-
 # [[test]]
 # name = "compile"
 # path = "tests/compile.rs"
