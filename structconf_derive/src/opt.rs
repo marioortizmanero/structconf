@@ -26,17 +26,6 @@ pub struct Opt {
     pub arg: Option<OptArgData>,
 }
 
-impl OptArgData {
-    pub fn get_long(name: Ident) -> String {
-        format!("--{}", name.to_string().replace("_", "-"))
-    }
-
-    pub fn get_short(name: Ident) -> String {
-        // Unwrap should never fail because empty names don't make sense
-        format!("-{}", name.to_string().chars().next().unwrap())
-    }
-}
-
 // TODO: improve compile-time error handling
 // fn missing_attr(span: Span) -> Error {
 //     Error::new(span, "No attribute 'conf' provided")
@@ -47,7 +36,7 @@ fn unexpected_item(span: Span, item: &str, ty: &str) -> Error {
 }
 
 #[derive(Debug, FromField)]
-#[darling(attributes(basic_opt))]
+#[darling(attributes(conf))]
 struct BasicOptAttrs {
     ident: Option<Ident>,
     ty: Type,
@@ -75,32 +64,81 @@ struct BasicOptAttrs {
     section: Option<String>,
 }
 
-impl Opt {
-    pub fn parse(f: &Field) -> Result<Opt, Error> {
-        // TODO: not necessary
-        // Obtains metadata from the single `#[conf(...)]` attribute, which
-        // is mandatory to reduce ambiguity.
-        // let attr = f.attrs.iter().find(|a| {
-        //     a.path.segments.len() == 1 && a.path.segments[0].ident == "conf"
-        // }).ok_or(missing_attr(f.span()))?;
+impl BasicOptAttrs {
+    fn check_conflicts(&self, span: Span) -> Result<(), Error> {
+        // Given an original expression and a list of other expressions it
+        // conflicts with, it returns an error in case both of them are
+        // true. The macro makes this a bit less repetitive.
+        macro_rules! check_conflicts {
+            ($orig:expr, $others:expr) => {
+                let (orig, orig_name) = $orig;
+                if orig {
+                    for (confl, confl_name) in $others.iter() {
+                        if *confl {
+                            return Err(Error::new(
+                                span,
+                                format!(
+                                    "{} and {} are conflicting options.",
+                                    orig_name, confl_name
+                                ),
+                            ));
+                        }
+                    }
+                }
+            };
+        }
 
-        // TODO: propagate instead of unwrap()
-        let data = BasicOptAttrs::from_field(f).unwrap();
-        let span = f.span();
+        // Empty fields may not use any other attribute
+        check_conflicts!(
+            (
+                self.no_short && self.no_long && self.no_file,
+                "`no_short`, `no_long` and `no_file`"
+            ),
+            [
+                (self.default.is_some(), "`default`"),
+                (self.long.is_some(), "`long`"),
+                (self.short.is_some(), "`short`"),
+                (self.help.is_some(), "`help`"),
+                (self.conf_file, "`conf_file`"),
+                (self.arg_inverted, "`arg_inverted`"),
+                (self.file.is_some(), "`file`"),
+                (self.section.is_some(), "`section`"),
+            ]
+        );
 
-        Ok(Opt {
-            name: data.ident.clone().unwrap(),
-            ty: data.ty.clone(),
-            default: Opt::parse_default(&data),
-            file: Opt::parse_file(span, &data)?,
-            arg: Opt::parse_arg(span, &data)?,
-        })
+        check_conflicts!(
+            (self.no_short, "`no_short`"),
+            [(self.short.is_some(), "`short`"),]
+        );
+
+        check_conflicts!(
+            (self.no_long, "`no_long`"),
+            [(self.long.is_some(), "`long`"),]
+        );
+
+        check_conflicts!(
+            (self.no_short && self.no_long, "`no_short` and `no_long`"),
+            [
+                (self.arg_inverted, "`arg_inverted`"),
+                (self.help.is_some(), "`help`"),
+                (self.conf_file, "`conf_file`"),
+            ]
+        );
+
+        check_conflicts!(
+            (self.no_file || self.conf_file, "`no_file` or `conf_file`"),
+            [
+                (self.file.is_some(), "`file`"),
+                (self.section.is_some(), "`section`"),
+            ]
+        );
+
+        Ok(())
     }
 
-    fn parse_default(attr: &BasicOptAttrs) -> proc_macro2::TokenStream {
-        // TODO: clone may be unnecessary
+    fn parse_default(&self) -> proc_macro2::TokenStream {
         // TODO: get values inside Option<T>
-        match attr.default.clone() {
+        match self.default.to_owned() {
             Some(expr) => {
                 // TODO: shouldn't unwrap
                 let expr = parse_str::<Expr>(&expr).unwrap();
@@ -112,64 +150,88 @@ impl Opt {
     }
 
     // TODO: get span from Ident
-    fn parse_file(
-        span: Span,
-        attr: &BasicOptAttrs,
-    ) -> Result<Option<OptFileData>, Error> {
-        if attr.no_file || attr.conf_file {
-            if attr.section.is_some() {
-                Err(unexpected_item(span, "section", "non-config-file"))
-            } else {
-                Ok(None)
-            }
+    fn parse_file(&self) -> Option<OptFileData> {
+        if self.no_file || self.conf_file {
+            None
         } else {
-            Ok(Some(OptFileData {
-                section: attr
+            Some(OptFileData {
+                section: self
                     .section
                     .clone()
                     .unwrap_or(String::from("Defaults")),
-            }))
+            })
         }
     }
 
-    fn parse_arg(
-        span: Span,
-        attr: &BasicOptAttrs,
-    ) -> Result<Option<OptArgData>, Error> {
+    fn parse_arg(&self, span: Span) -> Result<Option<OptArgData>, Error> {
         // The long or short values may be empty, meaning that the
         // value should be converted from the field name.
-        // TODO: check conflicting attributes, also checks for conf_file
-        if attr.no_long && attr.no_short {
-            if attr.help.is_some() {
-                Err(unexpected_item(span, "help", "arg"))
-            } else {
-                Ok(None)
-            }
+        if self.no_long && self.no_short {
+            Ok(None)
         } else {
-            // TODO clone may be unnecessary?
-            let long: Option<String> = if attr.no_long {
+            let get_ident = || self.ident.to_owned().unwrap().to_string();
+
+            let long: Option<String> = if self.no_long {
                 None
             } else {
-                Some(attr.long.clone().unwrap_or_else(|| {
-                    OptArgData::get_long(attr.ident.clone().unwrap())
-                }))
+                Some(self.long.to_owned().unwrap_or_else(get_ident))
             };
 
-            let short = if attr.no_short {
+            let short = if self.no_short {
                 None
             } else {
-                Some(attr.short.clone().unwrap_or_else(|| {
-                    OptArgData::get_short(attr.ident.clone().unwrap())
-                }))
+                match self.short.to_owned() {
+                    Some(s) => {
+                        // If the user provides the short name, this makes
+                        // sure it's a single character.
+                        let mut chars = s.chars();
+                        let first = chars.next();
+                        let second = chars.next();
+
+                        match (first, second) {
+                            (Some(ch), None) => Some(ch.to_string()),
+                            _ => {
+                                return Err(Error::new(
+                                    span,
+                                    "short argument can't be longer than one \
+                                character",
+                                ))
+                            }
+                        }
+                    }
+                    None => {
+                        // Otherwise, the short name is obtained from the
+                        // identifier, which must be at least a character
+                        // long, so `unwrap()` is used.
+                        Some(get_ident().chars().nth(0).unwrap().to_string())
+                    }
+                }
             };
 
             Ok(Some(OptArgData {
                 long,
                 short,
-                help: attr.help.clone().unwrap_or_default(),
-                inverted: attr.arg_inverted,
-                conf_file: attr.conf_file,
+                help: self.help.clone().unwrap_or_default(),
+                inverted: self.arg_inverted,
+                conf_file: self.conf_file,
             }))
         }
+    }
+}
+
+impl Opt {
+    pub fn parse(f: &Field) -> Result<Opt, Error> {
+        // TODO: propagate instead of unwrap()
+        let data = BasicOptAttrs::from_field(f).unwrap();
+        let span = f.span();
+        data.check_conflicts(span).unwrap();
+
+        Ok(Opt {
+            name: data.ident.clone().unwrap(),
+            ty: data.ty.clone(),
+            default: data.parse_default(),
+            file: data.parse_file(),
+            arg: data.parse_arg(span)?,
+        })
     }
 }

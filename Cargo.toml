@@ -17,8 +17,8 @@ path = "tests/trybuild.rs"
 
 # For `cargo expand` debugging
 # [[test]]
-# name = "parse_0"
-# path = "tests/parse_0.rs"
+# name = "basic"
+# path = "tests/parse/basic.rs"
 # [[test]]
 # name = "compile"
 # path = "tests/compile.rs"
