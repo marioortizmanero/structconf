@@ -1,15 +1,15 @@
+use crate::error::{Error, ErrorKind};
+
 use darling::FromField;
 use proc_macro2::Span;
 use quote::quote;
-use syn::{
-    parse::Error, parse_str, spanned::Spanned, Expr, Field, Ident, Type,
-};
+use syn::{spanned::Spanned, Expr, Field, Ident, Type};
 
 pub struct OptArgData {
     // An argument option may contain a long name, a short name, or both.
     pub long: Option<String>,
     pub short: Option<String>,
-    pub help: String,
+    pub help: Option<String>,
     pub conf_file: bool,
     pub inverted: bool,
 }
@@ -24,15 +24,6 @@ pub struct Opt {
     pub default: proc_macro2::TokenStream,
     pub file: Option<OptFileData>,
     pub arg: Option<OptArgData>,
-}
-
-// TODO: improve compile-time error handling
-// fn missing_attr(span: Span) -> Error {
-//     Error::new(span, "No attribute 'conf' provided")
-// }
-
-fn unexpected_item(span: Span, item: &str, ty: &str) -> Error {
-    Error::new(span, format!("unexpected '{}' in {} option", item, ty))
 }
 
 #[derive(Debug, FromField)]
@@ -75,13 +66,13 @@ impl BasicOptAttrs {
                 if orig {
                     for (confl, confl_name) in $others.iter() {
                         if *confl {
-                            return Err(Error::new(
+                            return Err(Error {
                                 span,
-                                format!(
-                                    "{} and {} are conflicting options.",
-                                    orig_name, confl_name
-                                ),
-                            ));
+                                kind: ErrorKind::Conflict(
+                                    orig_name.to_string(),
+                                    confl_name.to_string()
+                                )
+                            });
                         }
                     }
                 }
@@ -92,61 +83,59 @@ impl BasicOptAttrs {
         check_conflicts!(
             (
                 self.no_short && self.no_long && self.no_file,
-                "`no_short`, `no_long` and `no_file`"
+                "no_short, no_long and no_file"
             ),
             [
-                (self.default.is_some(), "`default`"),
-                (self.long.is_some(), "`long`"),
-                (self.short.is_some(), "`short`"),
-                (self.help.is_some(), "`help`"),
-                (self.conf_file, "`conf_file`"),
-                (self.arg_inverted, "`arg_inverted`"),
-                (self.file.is_some(), "`file`"),
-                (self.section.is_some(), "`section`"),
+                (self.default.is_some(), "default"),
+                (self.long.is_some(), "long"),
+                (self.short.is_some(), "short"),
+                (self.help.is_some(), "help"),
+                (self.conf_file, "conf_file"),
+                (self.arg_inverted, "arg_inverted"),
+                (self.file.is_some(), "file"),
+                (self.section.is_some(), "section"),
             ]
         );
 
         check_conflicts!(
-            (self.no_short, "`no_short`"),
-            [(self.short.is_some(), "`short`"),]
+            (self.no_short, "no_short"),
+            [(self.short.is_some(), "short"),]
         );
 
         check_conflicts!(
-            (self.no_long, "`no_long`"),
-            [(self.long.is_some(), "`long`"),]
+            (self.no_long, "no_long"),
+            [(self.long.is_some(), "long"),]
         );
 
         check_conflicts!(
-            (self.no_short && self.no_long, "`no_short` and `no_long`"),
+            (self.no_short && self.no_long, "no_short and no_long"),
             [
-                (self.arg_inverted, "`arg_inverted`"),
-                (self.help.is_some(), "`help`"),
-                (self.conf_file, "`conf_file`"),
+                (self.arg_inverted, "arg_inverted"),
+                (self.help.is_some(), "help"),
+                (self.conf_file, "conf_file"),
             ]
         );
 
         check_conflicts!(
-            (self.no_file || self.conf_file, "`no_file` or `conf_file`"),
+            (self.no_file || self.conf_file, "no_file or conf_file"),
             [
-                (self.file.is_some(), "`file`"),
-                (self.section.is_some(), "`section`"),
+                (self.file.is_some(), "file"),
+                (self.section.is_some(), "section"),
             ]
         );
 
         Ok(())
     }
 
-    fn parse_default(&self) -> proc_macro2::TokenStream {
+    fn parse_default(&self) -> Result<proc_macro2::TokenStream, Error> {
         // TODO: get values inside Option<T>
-        match self.default.to_owned() {
+        Ok(match self.default.to_owned() {
             Some(expr) => {
-                // TODO: shouldn't unwrap
-                let expr = parse_str::<Expr>(&expr).unwrap();
+                let expr = syn::parse_str::<Expr>(&expr)?;
                 quote! { #expr }
             }
             None => quote! { ::std::default::Default::default() },
-        }
-        .into()
+        }.into())
     }
 
     // TODO: get span from Ident
@@ -169,7 +158,7 @@ impl BasicOptAttrs {
         if self.no_long && self.no_short {
             Ok(None)
         } else {
-            let get_ident = || self.ident.to_owned().unwrap().to_string();
+            let get_ident = || self.ident.clone().unwrap().to_string();
 
             let long: Option<String> = if self.no_long {
                 None
@@ -191,11 +180,13 @@ impl BasicOptAttrs {
                         match (first, second) {
                             (Some(ch), None) => Some(ch.to_string()),
                             _ => {
-                                return Err(Error::new(
+                                return Err(Error {
                                     span,
-                                    "short argument can't be longer than one \
-                                character",
-                                ))
+                                    kind: ErrorKind::Parse(
+                                        String::from("short argument can't \
+                                        be longer than one character")
+                                    )
+                                })
                             }
                         }
                     }
@@ -211,7 +202,7 @@ impl BasicOptAttrs {
             Ok(Some(OptArgData {
                 long,
                 short,
-                help: self.help.clone().unwrap_or_default(),
+                help: self.help.clone(),
                 inverted: self.arg_inverted,
                 conf_file: self.conf_file,
             }))
@@ -221,15 +212,14 @@ impl BasicOptAttrs {
 
 impl Opt {
     pub fn parse(f: &Field) -> Result<Opt, Error> {
-        // TODO: propagate instead of unwrap()
-        let data = BasicOptAttrs::from_field(f).unwrap();
+        let data = BasicOptAttrs::from_field(f)?;
         let span = f.span();
-        data.check_conflicts(span).unwrap();
+        data.check_conflicts(span)?;
 
         Ok(Opt {
             name: data.ident.clone().unwrap(),
             ty: data.ty.clone(),
-            default: data.parse_default(),
+            default: data.parse_default()?,
             file: data.parse_file(),
             arg: data.parse_arg(span)?,
         })

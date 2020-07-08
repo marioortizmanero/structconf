@@ -1,14 +1,16 @@
 extern crate darling;
 extern crate proc_macro;
 
+mod error;
 mod opt;
 
-use crate::opt::{Opt, OptArgData};
+use crate::opt::Opt;
+use crate::error::{Error, ErrorKind};
 
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use syn::{parse::Error, Data, DataStruct, DeriveInput, FieldsNamed};
+use syn::{Data, DataStruct, DeriveInput, Fields, FieldsNamed};
 
 #[proc_macro_derive(StructConf, attributes(conf))]
 pub fn derive_conf(input: TokenStream) -> TokenStream {
@@ -19,18 +21,26 @@ pub fn derive_conf(input: TokenStream) -> TokenStream {
     // Build the trait implementation
     let result: Result<TokenStream, Error> = match &ast.data {
         Data::Struct(DataStruct {
-            fields: syn::Fields::Named(named),
+            fields: Fields::Named(named),
             ..
         }) => impl_conf_macro(&ast, &named),
-        _ => Err(Error::new(
-            ast.ident.span(),
-            "cannot derive Options for type",
-        )),
+        Data::Struct(_) => Err(Error{
+            kind: ErrorKind::DeriveType(String::from("unnamed struct")),
+            span: ast.ident.span(),
+        }),
+        Data::Enum(_) => Err(Error{
+            kind: ErrorKind::DeriveType(String::from("enum")),
+            span: ast.ident.span(),
+        }),
+        Data::Union(_) => Err(Error{
+            kind: ErrorKind::DeriveType(String::from("union")),
+            span: ast.ident.span(),
+        }),
     };
 
     match result {
         Ok(tokens) => tokens.into(),
-        Err(e) => e.to_compile_error().into(),
+        Err(e) => syn::Error::from(e).to_compile_error().into(),
     }
 }
 
@@ -39,12 +49,10 @@ fn impl_conf_macro(
     fields: &FieldsNamed,
 ) -> Result<TokenStream, Error> {
     let name = &input.ident;
-    // TODO remove unwrap
-    let options: Vec<Opt> = fields
-        .named
-        .iter()
-        .map(|f| Opt::parse(f).unwrap())
-        .collect();
+    let mut options = Vec::new();
+    for field in fields.named.iter() {
+        options.push(Opt::parse(field)?);
+    };
     let new_fields = parse_field_init(&options);
     let new_args = parse_args_init(&options);
     let to_file = parse_to_file(&options);
@@ -103,23 +111,25 @@ fn impl_conf_macro(
 fn parse_field_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
     opts.iter().map(|opt| {
         let Opt { name, ty, default, file, .. } = opt;
+        let mut init = quote! {
+            #name: args.value_of(stringify!(#name))
+        };
+
         // If there's no data for the config file, it won't be taken into
         // account at all. Otherwise, the section in which the option resides
         // may be specified, having "Defaults" as the fallback.
-        let conf_file = file.as_ref().and_then(|f| {
-            let section = f.section.as_str();
-            Some(quote! {
+        if let Some(file) = &file {
+            let section = file.section.as_str();
+            init.extend(quote! {
                 .or_else(|| file.get_from(Some(#section), stringify!(#name)))
-            })
-        }).unwrap_or_default();
+            });
+        };
 
         // This first check the value obtained by the argument parser. If that
         // fails, it will check the value from the config file.
         // If any of these existed, they are parsed into the required type
         // (this must succeed). Otherwise, it's assigned the default value.
-        quote! {
-            #name: args.value_of(stringify!(#name))
-                #conf_file
+        init.extend(quote! {
                 .and_then(|x| {
                     Some(x.parse::<#ty>().expect(&format!(
                         "The value for '{}' is invalid in the configuration: \
@@ -129,51 +139,45 @@ fn parse_field_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
                     )))
                 })
                 .unwrap_or(#default)
-        }
+        });
+
+        init
     }).collect()
 }
 
 fn parse_args_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
     opts.iter()
-        .map(|opt| {
+        .filter_map(|opt| {
             // In case it's not an argument, an empty TokenStream will be
             // returned.
             opt.arg
                 .as_ref()
                 .and_then(|data| {
                     let name = opt.name.to_string();
-                    let OptArgData {
-                        long, short, help, ..
-                    } = data;
-
-                    let long = long
-                        .as_ref()
-                        .and_then(|name| {
-                            Some(quote! {
-                                .long(#name)
-                            })
-                        })
-                        .unwrap_or_default();
-
-                    let short = short
-                        .as_ref()
-                        .and_then(|name| {
-                            Some(quote! {
-                                .short(#name)
-                            })
-                        })
-                        .unwrap_or_default();
-
-                    let init = quote! {
+                    let mut init = quote! {
                         ::clap::Arg::with_name(#name)
-                            #long
-                            #short
-                            .help(#help)
                     };
 
-                    init.into()
+                    if let Some(help) = &data.help {
+                        init.extend(quote! {
+                            .help(#help)
+                        });
+                    }
+
+                    if let Some(long) = &data.long {
+                        init.extend(quote! {
+                            .long(#long)
+                        });
+                    }
+
+                    if let Some(short) = &data.short {
+                        init.extend(quote! {
+                            .short(#short)
+                        });
+                    }
+
+                    Some(init)
                 })
-                .unwrap_or_default()
         })
         .collect()
 }
