@@ -71,8 +71,8 @@
 
 pub use structconf_derive::StructConf;
 
-use std::io;
 use std::fmt;
+use std::io;
 
 /// Small wrapper for the possible errors that may occur when parsing a
 /// StructConf-derived struct.
@@ -112,7 +112,8 @@ pub trait StructConf {
     /// and `parse_config`, which makes it possible to have an argument
     /// with the config file path.
     fn parse(app: clap::App, path: &str) -> Result<Self, Error>
-        where Self: Sized;
+    where
+        Self: Sized;
     /// Parses only the arguments with clap.
     fn parse_args<'a>(app: clap::App<'a, 'a>) -> clap::ArgMatches<'a>;
     /// With the argument matches returned by `parse_args`, the config
@@ -121,7 +122,8 @@ pub trait StructConf {
     ///
     /// This also serves as a function to refresh the config file values.
     fn parse_file(args: clap::ArgMatches, path: &str) -> Result<Self, Error>
-        where Self: Sized;
+    where
+        Self: Sized;
     /// Writes *all* the config file options into a file.
     fn write_file(&self, path: &str) -> Result<(), Error>;
 }

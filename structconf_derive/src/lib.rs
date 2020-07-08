@@ -142,7 +142,9 @@ fn parse_args_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
                 .as_ref()
                 .and_then(|data| {
                     let name = opt.name.to_string();
-                    let OptArgData { long, short, help, .. } = data;
+                    let OptArgData {
+                        long, short, help, ..
+                    } = data;
 
                     let long = long
                         .as_ref()

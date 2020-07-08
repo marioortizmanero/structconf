@@ -10,4 +10,3 @@ struct Config {
 }
 
 fn main() {}
-

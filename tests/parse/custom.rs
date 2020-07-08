@@ -1,9 +1,9 @@
 //! Includes fields with custom types that implement `ToString`, `FromStr`
 //! and `Default`.
 
-use std::str::FromStr;
 use std::default::Default;
 use std::fmt;
+use std::str::FromStr;
 use structconf::StructConf;
 
 enum MyEnum {
@@ -34,14 +34,17 @@ impl Default for MyEnum {
 
 struct MyStruct {
     data: i32,
-    moredata: String
+    moredata: String,
 }
 
 impl FromStr for MyStruct {
     type Err = fmt::Error;
 
     fn from_str(_s: &str) -> Result<Self, Self::Err> {
-        Ok(MyStruct{ data: 123, moredata: String::from("...") })
+        Ok(MyStruct {
+            data: 123,
+            moredata: String::from("..."),
+        })
     }
 }
 
@@ -53,7 +56,10 @@ impl fmt::Display for MyStruct {
 
 impl Default for MyStruct {
     fn default() -> Self {
-        MyStruct { data: 0, moredata: String::from("") }
+        MyStruct {
+            data: 0,
+            moredata: String::from(""),
+        }
     }
 }
 

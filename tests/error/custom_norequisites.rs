@@ -11,7 +11,7 @@ enum MyEnum {
 
 struct MyStruct {
     data: i32,
-    moredata: String
+    moredata: String,
 }
 
 #[derive(StructConf)]

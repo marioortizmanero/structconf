@@ -168,7 +168,7 @@ impl Opt {
                 short,
                 help: attr.help.clone().unwrap_or_default(),
                 inverted: attr.arg_inverted,
-                conf_file: attr.conf_file
+                conf_file: attr.conf_file,
             }))
         }
     }

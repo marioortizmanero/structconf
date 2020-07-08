@@ -1,8 +1,8 @@
 //! Includes optional fields, that should default to None.
 
+use std::default::Default;
 use std::fmt;
 use std::str::FromStr;
-use std::default::Default;
 use structconf::StructConf;
 
 enum MyEnum {
