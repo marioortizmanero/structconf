@@ -70,49 +70,37 @@
 
 pub use structconf_derive::StructConf;
 
-use std::io::Error as IOError;
-use ini::ini::Error as IniError;
+use std::io;
 use std::fmt;
 
-/// Represents an error encountered during argument parsing
+/// Small wrapper for the possible errors that may occur when parsing a
+/// StructConf-derived struct.
 #[derive(Debug)]
-pub struct Error {
-    kind: ErrorKind,
-}
-
-#[derive(Debug)]
-enum ErrorKind {
-    FailedFileRead(String),
-    FailedFileWrite(String),
-    FailedFileCreate(String),
-    UnexpectedError
+pub enum Error {
+    IO(io::Error),
+    Ini(ini::ini::ParseError),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use self::ErrorKind::*;
-
-        match &self.kind {
-            FailedFileRead(file) => write!(f, "invalid argument to option `{}`", file),
-            FailedFileWrite(file) => write!(f, "invalid argument to option `{}`", file),
-            FailedFileCreate(file) => write!(f, "invalid argument to option `{}`", file),
-            UnexpectedError => write!(f, "unexpected error")
+        match &self {
+            Error::IO(err) => err.fmt(f),
+            Error::Ini(err) => err.fmt(f),
         }
     }
 }
 
-impl From<IOError> for Error {
-    fn from(_err: IOError) -> Self {
-        Error {
-            kind: ErrorKind::UnexpectedError
-        }
+impl From<io::Error> for Error {
+    fn from(err: io::Error) -> Self {
+        Error::IO(err)
     }
 }
 
-impl From<IniError> for Error {
-    fn from(_err: IniError) -> Self {
-        Error {
-            kind: ErrorKind::UnexpectedError
+impl From<ini::ini::Error> for Error {
+    fn from(err: ini::ini::Error) -> Self {
+        match err {
+            ini::ini::Error::Io(err) => Error::IO(err),
+            ini::ini::Error::Parse(err) => Error::Ini(err),
         }
     }
 }
