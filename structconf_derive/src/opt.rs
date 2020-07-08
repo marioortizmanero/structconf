@@ -37,7 +37,7 @@ impl OptArgData {
     }
 }
 
-// TODO: may be unnecessary
+// TODO: improve compile-time error handling
 // fn missing_attr(span: Span) -> Error {
 //     Error::new(span, "No attribute 'conf' provided")
 // }

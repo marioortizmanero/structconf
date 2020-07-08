@@ -30,12 +30,13 @@
 //!
 //! ## Argument parser attributes
 //! * `help = "..."`: the help message shown in the argument parser.
-//! * `long = "..."`: a custom long argument name. Otherwise, it will be
-//! obtained directly from the field's name (`do_something` will be
-//! `--do-something`).
+//! * `long = "arg_name"`: a custom long argument name. Otherwise, it will be
+//! obtained directly from the field's name. `do_something` will be
+//! `--do-something`.
 //! * `no_long`: the option won't include the option as a long argument.
-//! * `short = "..."`: a custom short argument name. Otherwise, it will be
-//! obtained directly from the field's name (`do_something` will be `-d`).
+//! * `short = "x"`: a custom short argument name (only made up of a single
+//! character). Otherwise, it will be obtained directly from the field's
+//! name. `do_something` will be `-d`.
 //! * `no_short`: the option won't include the option as a short argument.
 //! * `arg_inverted`: the argument value is the opposite. This is useful for
 //! arguments where the argument's value is inverted:
