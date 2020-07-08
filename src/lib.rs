@@ -38,7 +38,7 @@
 //! character). Otherwise, it will be obtained directly from the field's
 //! name. `do_something` will be `-d`.
 //! * `no_short`: the option won't include the option as a short argument.
-//! * `arg_inverted`: the argument value is the opposite. This is useful for
+//! * `inverse_arg`: the argument value is the opposite. This is useful for
 //! arguments where the argument's value is inverted:
 //!
 //! ```rust
@@ -46,7 +46,7 @@
 //!
 //! #[derive(StructConf)]
 //! struct Bakery {
-//!     #[conf(arg_inverted, no_short, long = "--no-pancakes")]
+//!     #[conf(inverse_arg, no_short, long = "--no-pancakes")]
 //!     pancakes: bool
 //! }
 //! ```

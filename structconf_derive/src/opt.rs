@@ -1,4 +1,4 @@
-use crate::error::{Error, ErrorKind};
+use crate::error::{Error, ErrorKind, Result};
 
 use darling::FromField;
 use proc_macro2::Span;
@@ -44,7 +44,7 @@ struct BasicOptAttrs {
     #[darling(default)]
     help: Option<String>,
     #[darling(default)]
-    arg_inverted: bool,
+    inverse_arg: bool,
     #[darling(default)]
     conf_file: bool,
     #[darling(default)]
@@ -56,7 +56,7 @@ struct BasicOptAttrs {
 }
 
 impl BasicOptAttrs {
-    fn check_conflicts(&self, span: Span) -> Result<(), Error> {
+    fn check_conflicts(&self, span: Span) -> Result<()> {
         // Given an original expression and a list of other expressions it
         // conflicts with, it returns an error in case both of them are
         // true. The macro makes this a bit less repetitive.
@@ -91,7 +91,7 @@ impl BasicOptAttrs {
                 (self.short.is_some(), "short"),
                 (self.help.is_some(), "help"),
                 (self.conf_file, "conf_file"),
-                (self.arg_inverted, "arg_inverted"),
+                (self.inverse_arg, "inverse_arg"),
                 (self.file.is_some(), "file"),
                 (self.section.is_some(), "section"),
             ]
@@ -110,7 +110,7 @@ impl BasicOptAttrs {
         check_conflicts!(
             (self.no_short && self.no_long, "no_short and no_long"),
             [
-                (self.arg_inverted, "arg_inverted"),
+                (self.inverse_arg, "inverse_arg"),
                 (self.help.is_some(), "help"),
                 (self.conf_file, "conf_file"),
             ]
@@ -127,7 +127,7 @@ impl BasicOptAttrs {
         Ok(())
     }
 
-    fn parse_default(&self) -> Result<proc_macro2::TokenStream, Error> {
+    fn parse_default(&self) -> Result<proc_macro2::TokenStream> {
         // TODO: get values inside Option<T>
         Ok(match self.default.to_owned() {
             Some(expr) => {
@@ -152,7 +152,7 @@ impl BasicOptAttrs {
         }
     }
 
-    fn parse_arg(&self, span: Span) -> Result<Option<OptArgData>, Error> {
+    fn parse_arg(&self, span: Span) -> Result<Option<OptArgData>> {
         // The long or short values may be empty, meaning that the
         // value should be converted from the field name.
         if self.no_long && self.no_short {
@@ -203,7 +203,7 @@ impl BasicOptAttrs {
                 long,
                 short,
                 help: self.help.clone(),
-                inverted: self.arg_inverted,
+                inverted: self.inverse_arg,
                 conf_file: self.conf_file,
             }))
         }
@@ -211,17 +211,17 @@ impl BasicOptAttrs {
 }
 
 impl Opt {
-    pub fn parse(f: &Field) -> Result<Opt, Error> {
-        let data = BasicOptAttrs::from_field(f)?;
-        let span = f.span();
+    pub fn parse(field: Field) -> Result<Opt> {
+        let data = BasicOptAttrs::from_field(&field)?;
+        let span = field.span();
         data.check_conflicts(span)?;
 
         Ok(Opt {
-            name: data.ident.clone().unwrap(),
-            ty: data.ty.clone(),
             default: data.parse_default()?,
             file: data.parse_file(),
             arg: data.parse_arg(span)?,
+            name: data.ident.unwrap(),
+            ty: data.ty,
         })
     }
 }

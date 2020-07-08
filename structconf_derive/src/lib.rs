@@ -5,10 +5,10 @@ mod error;
 mod opt;
 
 use crate::opt::Opt;
-use crate::error::{Error, ErrorKind};
+use crate::error::{Error, ErrorKind, Result};
 
 use proc_macro::TokenStream;
-use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::{Ident, TokenStream as TokenStream2};
 use quote::quote;
 use syn::{Data, DataStruct, DeriveInput, Fields, FieldsNamed};
 
@@ -17,13 +17,14 @@ pub fn derive_conf(input: TokenStream) -> TokenStream {
     // Construct a representation of Rust code as a syntax tree
     // that we can manipulate
     let ast: DeriveInput = syn::parse(input).unwrap();
+    let name = &ast.ident;
 
     // Build the trait implementation
-    let result: Result<TokenStream, Error> = match &ast.data {
+    let result: Result<TokenStream> = match ast.data {
         Data::Struct(DataStruct {
-            fields: Fields::Named(named),
+            fields: Fields::Named(named_fields),
             ..
-        }) => impl_conf_macro(&ast, &named),
+        }) => impl_conf_macro(name, named_fields),
         Data::Struct(_) => Err(Error{
             kind: ErrorKind::DeriveType(String::from("unnamed struct")),
             span: ast.ident.span(),
@@ -45,14 +46,13 @@ pub fn derive_conf(input: TokenStream) -> TokenStream {
 }
 
 fn impl_conf_macro(
-    input: &DeriveInput,
-    fields: &FieldsNamed,
-) -> Result<TokenStream, Error> {
-    let name = &input.ident;
+    name: &Ident,
+    fields: FieldsNamed,
+) -> Result<TokenStream> {
     let mut options = Vec::new();
-    for field in fields.named.iter() {
+    for field in fields.named.into_iter() {
         options.push(Opt::parse(field)?);
-    };
+    }
     let new_fields = parse_field_init(&options);
     let new_args = parse_args_init(&options);
     let to_file = parse_to_file(&options);

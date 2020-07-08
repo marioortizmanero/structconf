@@ -5,7 +5,7 @@ use structconf::StructConf;
 
 #[derive(StructConf)]
 struct Config {
-    #[conf(arg_inverted)]
+    #[conf(inverse_arg)]
     pub value: i32,
 }
 

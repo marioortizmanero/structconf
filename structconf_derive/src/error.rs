@@ -1,6 +1,8 @@
 use std::fmt;
 use proc_macro2::Span;
 
+pub type Result<T> = std::result::Result<T, Error>;
+
 // The errors that may occur during the execution of the procedural macro.
 pub struct Error {
     pub kind: ErrorKind,
