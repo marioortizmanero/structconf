@@ -8,10 +8,10 @@ struct Config {
     config_file: String,
     // Although `no_file` isn't strictly necessary, this should compile.
     #[conf(conf_file, no_file)]
-    config_file: String,
+    no_file: String,
     // Custom names can still be applied.
     #[conf(conf_file, long = "conf_file", short = "c")]
-    config_file: String,
+    custom: String,
 }
 
 fn main() {}

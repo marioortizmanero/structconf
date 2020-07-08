@@ -1,20 +1,41 @@
 //! Includes optional fields, that should default to None.
 
+use std::fmt;
+use std::str::FromStr;
+use std::default::Default;
 use structconf::StructConf;
 
-#[derive(Display, EnumString)]
-enum MyDataType {
-    A,
-    B,
-    C,
+enum MyEnum {
+    One,
+    Two,
+    Three,
 }
 
-#[derive(Debug, StructConf)]
+impl FromStr for MyEnum {
+    type Err = fmt::Error;
+
+    fn from_str(_s: &str) -> Result<Self, Self::Err> {
+        Ok(MyEnum::One)
+    }
+}
+
+impl fmt::Display for MyEnum {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "...")
+    }
+}
+
+impl Default for MyEnum {
+    fn default() -> Self {
+        MyEnum::One
+    }
+}
+
+#[derive(StructConf)]
 struct Config {
-    j: Option<i32>,
-    b: Option<u64>,
-    c: Option<&str>,
-    d: Option<MyDataType>,
+    a: Option<i32>,
+    b: Option<f64>,
+    d: Option<MyEnum>,
     e: Option<String>,
     #[conf(no_short)]
     f: Option<String>,
