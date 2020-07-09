@@ -8,7 +8,7 @@ description = "derive macro for structconf"
 homepage = "https://github.com/vidify/structconf"
 repository = "https://github.com/vidify/structconf"
 keywords = [
-    "config", "configuration", "settings", "args", "clap", "ini", "rust-ini"
+    "config", "configuration", "settings", "clap", "rust-ini"
 ]
 categories = ["config"]
 license = "MIT"
