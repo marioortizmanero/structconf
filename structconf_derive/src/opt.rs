@@ -11,7 +11,7 @@ pub struct OptArgData {
     pub short: Option<String>,
     pub help: Option<String>,
     pub conf_file: bool,
-    pub inverted: bool,
+    pub inverse: bool,
 }
 
 pub struct OptFileData {
@@ -203,7 +203,7 @@ impl BasicOptAttrs {
                 long,
                 short,
                 help: self.help.clone(),
-                inverted: self.inverse_arg,
+                inverse: self.inverse_arg,
                 conf_file: self.conf_file,
             }))
         }

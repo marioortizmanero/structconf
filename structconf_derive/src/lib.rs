@@ -110,7 +110,7 @@ fn impl_conf_macro(
 
 fn parse_field_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
     opts.iter().map(|opt| {
-        let Opt { name, ty, default, file, .. } = opt;
+        let Opt { name, ty, default, file, arg, .. } = opt;
         let mut init = quote! {
             #name: args.value_of(stringify!(#name))
         };
@@ -129,16 +129,36 @@ fn parse_field_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
         // fails, it will check the value from the config file.
         // If any of these existed, they are parsed into the required type
         // (this must succeed). Otherwise, it's assigned the default value.
+        // TODO: use `?` instead of expect
         init.extend(quote! {
-                .and_then(|x| {
-                    Some(x.parse::<#ty>().expect(&format!(
-                        "The value for '{}' is invalid in the configuration: \
-                        '{}'",
-                        stringify!(#name),
-                        x
-                    )))
-                })
-                .unwrap_or(#default)
+            .and_then(|x| {
+                Some(x.parse::<#ty>().expect(&format!(
+                    "The value for '{}' is invalid in the configuration: \
+                    '{}'",
+                    stringify!(#name),
+                    x
+                )))
+            })
+        });
+
+        // The argument may be inverse.
+        if let Some(arg) = arg {
+            if arg.inverse {
+                init.extend(quote! {
+                    .and_then(|x| {
+                        if args.value_of(stringify!(name)).is_some() {
+                            Some(!x)
+                        } else {
+                            Some(x)
+                        }
+                    })
+                });
+            }
+        }
+
+        // Final default value.
+        init.extend(quote! {
+            .unwrap_or(#default)
         });
 
         init

@@ -4,7 +4,7 @@ use structconf::StructConf;
 
 #[derive(StructConf)]
 struct Config {
-    #[conf(short = "n", long = "no_thing", inverse_arg)]
+    #[conf(inverse_arg, short = "n", long = "no_thing")]
     thing: bool,
 }
 
