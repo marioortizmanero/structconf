@@ -10,7 +10,7 @@ use crate::error::{Error, ErrorKind, Result};
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, TokenStream as TokenStream2};
 use quote::quote;
-use syn::{Data, DataStruct, DeriveInput, Fields, FieldsNamed};
+use syn::{Data, DataStruct, DeriveInput, Fields, FieldsNamed, Expr};
 
 #[proc_macro_derive(StructConf, attributes(conf))]
 pub fn derive_conf(input: TokenStream) -> TokenStream {
@@ -154,7 +154,34 @@ fn impl_conf_macro(
 /// to propagate errors with `?`.
 fn parse_field_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
     opts.iter().map(|opt| {
-        let Opt { name, ty, default, file, arg, .. } = opt;
+        let Opt { name, ty, is_option, default, file, arg, .. } = opt;
+
+        // Obtains a TokenStream with what the default value of the option
+        // is going to be. If `default` was used, the expression is used.
+        // Otherwise, the type's default value is used, which may be `None`
+        // in case the type is an `Option<T>`.
+        let default = match default.to_owned() {
+            Some(expr) => {
+                // TODO remove unwrap
+                let expr = syn::parse_str::<Expr>(&expr).unwrap();
+                if *is_option {
+                    quote! { Some(#expr) }
+                } else {
+                    quote! { #expr }
+                }
+            },
+            None => if *is_option {
+                quote! { None }
+            } else {
+                quote! { ::std::default::Default::default() }
+            }
+        };
+
+        let val_ret = if *is_option {
+            quote! { Some(opt) }
+        } else {
+            quote! { opt }
+        };
 
         let mut value = quote! {
             let mut opt: Option<&str> = None;
@@ -192,7 +219,7 @@ fn parse_field_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
                             ::structconf::Error::Parse(e.to_string())
                         })?;
                     #invert_opt
-                    opt
+                    #val_ret
                 },
                 None => #default
             }
@@ -247,9 +274,19 @@ fn parse_to_file(opts: &Vec<Opt>) -> Vec<TokenStream2> {
             opt.file.as_ref().and_then(|file| {
                 let name = opt.name.clone();
                 let section = file.section.as_str();
-                Some(quote! {
-                    conf.with_section(Some(#section))
-                        .set(stringify!(#name), self.#name.to_string());
+
+                Some(if opt.is_option {
+                    quote! {
+                        if let Some(val) = &self.#name {
+                            conf.with_section(Some(#section))
+                                .set(stringify!(#name), val.to_string());
+                        }
+                    }
+                } else {
+                    quote! {
+                        conf.with_section(Some(#section))
+                            .set(stringify!(#name), self.#name.to_string());
+                    }
                 })
             })
         })
