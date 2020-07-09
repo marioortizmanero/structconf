@@ -4,7 +4,7 @@ extern crate proc_macro;
 mod error;
 mod opt;
 
-use crate::opt::Opt;
+use crate::opt::{Opt, OptArgData, OptFileData};
 use crate::error::{Error, ErrorKind, Result};
 
 use proc_macro::TokenStream;
@@ -108,60 +108,99 @@ fn impl_conf_macro(
     .into())
 }
 
+/// This will return a tokenstream for each field that has to be initialized,
+/// depending on whether the option is an argument, a config file option,
+/// none, or both:
+///
+/// ```rust
+/// field: {
+///     // May go through no branches, branch A, branch B, or both branches.
+///     let mut opt: Option<String> = None;
+/// 
+///     // Branch A (argument)
+///     opt = arg.value_of(...);
+/// 
+///     // Branch B (config file)
+///     if let None = opt {
+///         opt = file.get_from(...);
+///     }
+/// 
+///     match opt {
+///         // Branch A, B, or both
+///         Some(opt) => {
+///             // Parse `opt`
+///             let opt = opt.parse()?;
+///         
+///             // Branch A, if `inverse_arg`, after parsing. `inverse_arg`
+///             // may only be true if it's an argument.
+///             if arg.value_of(...).is_some() {
+///                 opt = !opt;
+///             }
+///         },
+///         // None
+///         None => default
+///     }
+/// }
+/// ```
+///
+/// This is intended to be as flexible as possible, and to avoid repetition
+/// in the code, so it may not be optimized for some cases. For example, if
+/// the option is neither a config file option nor an argument, the `match`
+/// block is useless because it's obvious it's going to go through the `None`
+/// branch. But these cases are easy to optimize by the compiler, so it's not
+/// important.
+///
+/// Methods like `unwrap_or` can't be used here because this has to be able
+/// to propagate errors with `?`.
 fn parse_field_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
     opts.iter().map(|opt| {
         let Opt { name, ty, default, file, arg, .. } = opt;
-        let mut init = quote! {
-            #name: args.value_of(stringify!(#name))
+
+        let mut value = quote! {
+            let mut opt: Option<&str> = None;
         };
 
-        // If there's no data for the config file, it won't be taken into
-        // account at all. Otherwise, the section in which the option resides
-        // may be specified, having "Defaults" as the fallback.
-        if let Some(file) = &file {
-            let section = file.section.as_str();
-            init.extend(quote! {
-                .or_else(|| file.get_from(Some(#section), stringify!(#name)))
+        let mut invert_opt = TokenStream2::new();
+        if let Some(OptArgData { inverse, .. }) = arg {
+            value.extend(quote! {
+                opt = args.value_of(stringify!(#name));
             });
-        };
 
-        // This first check the value obtained by the argument parser. If that
-        // fails, it will check the value from the config file.
-        // If any of these existed, they are parsed into the required type
-        // (this must succeed). Otherwise, it's assigned the default value.
-        // TODO: use `?` instead of expect
-        init.extend(quote! {
-            .and_then(|x| {
-                Some(x.parse::<#ty>().expect(&format!(
-                    "The value for '{}' is invalid in the configuration: \
-                    '{}'",
-                    stringify!(#name),
-                    x
-                )))
-            })
-        });
-
-        // The argument may be inverse.
-        if let Some(arg) = arg {
-            if arg.inverse {
-                init.extend(quote! {
-                    .and_then(|x| {
-                        if args.value_of(stringify!(name)).is_some() {
-                            Some(!x)
-                        } else {
-                            Some(x)
-                        }
-                    })
+            if *inverse {
+                invert_opt.extend(quote! {
+                    if args.value_of(stringify!(#name)).is_some() {
+                        opt = !opt;
+                    }
                 });
             }
         }
 
-        // Final default value.
-        init.extend(quote! {
-            .unwrap_or(#default)
+        if let Some(OptFileData { section, .. }) = file {
+            value.extend(quote! {
+                if let None = opt {
+                    opt = file.get_from(Some(#section), stringify!(#name));
+                }
+            });
+        }
+
+        value.extend(quote! {
+            match opt {
+                Some(opt) => {
+                    let opt = opt
+                        .parse::<#ty>()
+                        .map_err(|e| {
+                            ::structconf::Error::Parse(e.to_string())
+                        })?;
+                    #invert_opt
+                    opt
+                },
+                None => #default
+            }
         });
 
-        init
+        quote! {
+            #name: { #value }
+        }
     }).collect()
 }
 

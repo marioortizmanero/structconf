@@ -80,6 +80,7 @@ use std::io;
 pub enum Error {
     IO(io::Error),
     Ini(ini::ini::ParseError),
+    Parse(String),
 }
 
 impl fmt::Display for Error {
@@ -87,6 +88,7 @@ impl fmt::Display for Error {
         match &self {
             Error::IO(err) => err.fmt(f),
             Error::Ini(err) => err.fmt(f),
+            Error::Parse(msg) => write!(f, "Error when parsing: {}", msg),
         }
     }
 }
