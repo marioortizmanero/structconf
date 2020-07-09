@@ -9,19 +9,11 @@ autotests = false
 clap = { version = "2.33.1", default-features = false, features = [ "color" ] }
 rust-ini = "0.15.3"
 dirs = "3.0.0"
-structconf_derive = { path = "structconf_derive" }
+structconf_derive = { version = "0.1.0", path = "structconf_derive" }
 
 [[test]]
 name = "tests"
 path = "tests/trybuild.rs"
-
-# For `cargo expand` debugging
-# [[test]]
-# name = "basic"
-# path = "tests/parse/basic.rs"
-# [[test]]
-# name = "compile"
-# path = "tests/compile.rs"
 
 [dev-dependencies]
 trybuild = { version = "1.0", features = ["diff"] }
