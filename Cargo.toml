@@ -21,9 +21,9 @@ clap = "2.33.1"
 rust-ini = "0.15.3"
 structconf_derive = { version = "0.1.0", path = "structconf_derive" }
 
+[dev-dependencies]
+trybuild = { version = "1.0", features = ["diff"] }
+
 [[test]]
 name = "tests"
 path = "tests/trybuild.rs"
-
-[dev-dependencies]
-trybuild = { version = "1.0", features = ["diff"] }

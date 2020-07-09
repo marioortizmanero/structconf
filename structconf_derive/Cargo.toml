@@ -4,11 +4,21 @@ version = "0.1.0"
 authors = ["Mario Ortiz Manero <marioortizmanero@gmail.com>"]
 edition = "2018"
 
+description = "derive macro for structconf"
+homepage = "https://github.com/vidify/structconf"
+repository = "https://github.com/vidify/structconf"
+keywords = [
+    "config", "configuration", "settings", "args", "clap", "ini", "rust-ini"
+]
+categories = ["config"]
+license = "MIT"
+
 [lib]
+name = "structconf_derive"
 proc-macro = true
 
 [dependencies]
-syn = { version = "1.0", features = ["extra-traits"] }
+syn = { version = "1.0" }
 quote = "1.0"
 proc-macro2 = "1.0.18"
 darling = "0.10.2"

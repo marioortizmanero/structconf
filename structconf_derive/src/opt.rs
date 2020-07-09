@@ -132,7 +132,6 @@ impl BasicOptAttrs {
         use syn::{Path, TypePath};
 
         // Checking the type is wrapped by an `Option<T>`.
-        // eprintln!("TYPE: {:#?}", &self.ty);
         if let Type::Path(TypePath {
             path: Path { segments, .. },
             ..
@@ -151,7 +150,6 @@ impl BasicOptAttrs {
                 // Obtaining the type inside the `Option<T>`.
                 if let PathAngles(Brackets { args, .. }) = args {
                     if let InnerType(ty) = args.first().unwrap() {
-                        // eprintln!("IT'S OPTIONAAAAAAL");
                         return (ty.clone(), true);
                     }
                 }
