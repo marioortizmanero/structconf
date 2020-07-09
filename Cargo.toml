@@ -3,12 +3,22 @@ name = "structconf"
 version = "0.1.0"
 authors = ["Mario Ortiz Manero <marioortizmanero@gmail.com>"]
 edition = "2018"
+
+description = "combine clap and rust-ini into a single procedural macro"
+homepage = "https://github.com/vidify/structconf"
+repository = "https://github.com/vidify/structconf"
+keywords = [
+    "config", "configuration", "settings", "args", "clap", "ini", "rust-ini"
+]
+categories = ["config"]
+license = "MIT"
+readme = "README.md"
+
 autotests = false
 
 [dependencies]
-clap = { version = "2.33.1", default-features = false, features = [ "color" ] }
+clap = "2.33.1"
 rust-ini = "0.15.3"
-dirs = "3.0.0"
 structconf_derive = { version = "0.1.0", path = "structconf_derive" }
 
 [[test]]
