@@ -4,13 +4,13 @@ extern crate proc_macro;
 mod error;
 mod opt;
 
-use crate::opt::{Opt, OptArgData, OptFileData};
 use crate::error::{Error, ErrorKind, Result};
+use crate::opt::{Opt, OptArgData, OptFileData};
 
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, TokenStream as TokenStream2};
 use quote::quote;
-use syn::{Data, DataStruct, DeriveInput, Fields, FieldsNamed, Expr};
+use syn::{Data, DataStruct, DeriveInput, Expr, Fields, FieldsNamed};
 
 #[proc_macro_derive(StructConf, attributes(conf))]
 pub fn derive_conf(input: TokenStream) -> TokenStream {
@@ -25,15 +25,15 @@ pub fn derive_conf(input: TokenStream) -> TokenStream {
             fields: Fields::Named(named_fields),
             ..
         }) => impl_conf_macro(name, named_fields),
-        Data::Struct(_) => Err(Error{
+        Data::Struct(_) => Err(Error {
             kind: ErrorKind::DeriveType(String::from("unnamed struct")),
             span: ast.ident.span(),
         }),
-        Data::Enum(_) => Err(Error{
+        Data::Enum(_) => Err(Error {
             kind: ErrorKind::DeriveType(String::from("enum")),
             span: ast.ident.span(),
         }),
-        Data::Union(_) => Err(Error{
+        Data::Union(_) => Err(Error {
             kind: ErrorKind::DeriveType(String::from("union")),
             span: ast.ident.span(),
         }),
@@ -45,10 +45,7 @@ pub fn derive_conf(input: TokenStream) -> TokenStream {
     }
 }
 
-fn impl_conf_macro(
-    name: &Ident,
-    fields: FieldsNamed,
-) -> Result<TokenStream> {
+fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
     let mut options = Vec::new();
     for field in fields.named.into_iter() {
         options.push(Opt::parse(field)?);
@@ -116,15 +113,15 @@ fn impl_conf_macro(
 /// field: {
 ///     // May go through no branches, branch A, branch B, or both branches.
 ///     let mut opt: Option<String> = None;
-/// 
+///
 ///     // Branch A (argument)
 ///     opt = arg.value_of(...);
-/// 
+///
 ///     // Branch B (config file)
 ///     if let None = opt {
 ///         opt = file.get_from(...);
 ///     }
-/// 
+///
 ///     match opt {
 ///         // Branch A, B, or both
 ///         Some(opt) => {
@@ -153,82 +150,94 @@ fn impl_conf_macro(
 /// Methods like `unwrap_or` can't be used here because this has to be able
 /// to propagate errors with `?`.
 fn parse_field_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
-    opts.iter().map(|opt| {
-        let Opt { name, ty, is_option, default, file, arg, .. } = opt;
+    opts.iter()
+        .map(|opt| {
+            let Opt {
+                name,
+                ty,
+                is_option,
+                default,
+                file,
+                arg,
+                ..
+            } = opt;
 
-        // Obtains a TokenStream with what the default value of the option
-        // is going to be. If `default` was used, the expression is used.
-        // Otherwise, the type's default value is used, which may be `None`
-        // in case the type is an `Option<T>`.
-        let default = match default.to_owned() {
-            Some(expr) => {
-                // TODO remove unwrap
-                let expr = syn::parse_str::<Expr>(&expr).unwrap();
-                if *is_option {
-                    quote! { Some(#expr) }
-                } else {
-                    quote! { #expr }
+            // Obtains a TokenStream with what the default value of the option
+            // is going to be. If `default` was used, the expression is used.
+            // Otherwise, the type's default value is used, which may be `None`
+            // in case the type is an `Option<T>`.
+            let default = match default.to_owned() {
+                Some(expr) => {
+                    // TODO remove unwrap
+                    let expr = syn::parse_str::<Expr>(&expr).unwrap();
+                    if *is_option {
+                        quote! { Some(#expr) }
+                    } else {
+                        quote! { #expr }
+                    }
                 }
-            },
-            None => if *is_option {
-                quote! { None }
+                None => {
+                    if *is_option {
+                        quote! { None }
+                    } else {
+                        quote! { ::std::default::Default::default() }
+                    }
+                }
+            };
+
+            let val_ret = if *is_option {
+                quote! { Some(opt) }
             } else {
-                quote! { ::std::default::Default::default() }
+                quote! { opt }
+            };
+
+            let mut value = quote! {
+                let mut opt: Option<&str> = None;
+            };
+
+            let mut invert_opt = TokenStream2::new();
+            if let Some(OptArgData { inverse, .. }) = arg {
+                value.extend(quote! {
+                    opt = args.value_of(stringify!(#name));
+                });
+
+                if *inverse {
+                    invert_opt.extend(quote! {
+                        if args.value_of(stringify!(#name)).is_some() {
+                            opt = !opt;
+                        }
+                    });
+                }
             }
-        };
 
-        let val_ret = if *is_option {
-            quote! { Some(opt) }
-        } else {
-            quote! { opt }
-        };
-
-        let mut value = quote! {
-            let mut opt: Option<&str> = None;
-        };
-
-        let mut invert_opt = TokenStream2::new();
-        if let Some(OptArgData { inverse, .. }) = arg {
-            value.extend(quote! {
-                opt = args.value_of(stringify!(#name));
-            });
-
-            if *inverse {
-                invert_opt.extend(quote! {
-                    if args.value_of(stringify!(#name)).is_some() {
-                        opt = !opt;
+            if let Some(OptFileData { section, .. }) = file {
+                value.extend(quote! {
+                    if let None = opt {
+                        opt = file.get_from(Some(#section), stringify!(#name));
                     }
                 });
             }
-        }
 
-        if let Some(OptFileData { section, .. }) = file {
             value.extend(quote! {
-                if let None = opt {
-                    opt = file.get_from(Some(#section), stringify!(#name));
+                match opt {
+                    Some(opt) => {
+                        let mut opt = opt
+                            .parse::<#ty>()
+                            .map_err(|e| {
+                                ::structconf::Error::Parse(e.to_string())
+                            })?;
+                        #invert_opt
+                        #val_ret
+                    },
+                    None => #default
                 }
             });
-        }
 
-        value.extend(quote! {
-            match opt {
-                Some(opt) => {
-                    let mut opt = opt
-                        .parse::<#ty>()
-                        .map_err(|e| {
-                            ::structconf::Error::Parse(e.to_string())
-                        })?;
-                    #invert_opt
-                    #val_ret
-                },
-                None => #default
+            quote! {
+                #name: { #value }
             }
-        });
-
-        quote! {
-            #name: { #value }
-        }
-    }).collect()
+        })
+        .collect()
 }
 
 fn parse_args_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
@@ -236,34 +245,32 @@ fn parse_args_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
         .filter_map(|opt| {
             // In case it's not an argument, an empty TokenStream will be
             // returned.
-            opt.arg
-                .as_ref()
-                .and_then(|data| {
-                    let name = opt.name.to_string();
-                    let mut init = quote! {
-                        ::clap::Arg::with_name(#name)
-                    };
+            opt.arg.as_ref().and_then(|data| {
+                let name = opt.name.to_string();
+                let mut init = quote! {
+                    ::clap::Arg::with_name(#name)
+                };
 
-                    if let Some(help) = &data.help {
-                        init.extend(quote! {
-                            .help(#help)
-                        });
-                    }
+                if let Some(help) = &data.help {
+                    init.extend(quote! {
+                        .help(#help)
+                    });
+                }
 
-                    if let Some(long) = &data.long {
-                        init.extend(quote! {
-                            .long(#long)
-                        });
-                    }
+                if let Some(long) = &data.long {
+                    init.extend(quote! {
+                        .long(#long)
+                    });
+                }
 
-                    if let Some(short) = &data.short {
-                        init.extend(quote! {
-                            .short(#short)
-                        });
-                    }
+                if let Some(short) = &data.short {
+                    init.extend(quote! {
+                        .short(#short)
+                    });
+                }
 
-                    Some(init)
-                })
+                Some(init)
+            })
         })
         .collect()
 }

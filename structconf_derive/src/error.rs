@@ -1,5 +1,5 @@
-use std::fmt;
 use proc_macro2::Span;
+use std::fmt;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -22,9 +22,17 @@ impl fmt::Display for Error {
         use ErrorKind::*;
 
         match &self.kind {
-            DeriveType(ty) => write!(f, "Cannot #[derive(StructConf)] for the type `{}`", ty),
-            Conflict(opt1, opt2) => write!(f, "`{}` and `{}` are conflicting attributes", opt1, opt2),
-            Value(opt, val) => write!(f, "Invalid value for `{}`: {}", opt, val),
+            DeriveType(ty) => {
+                write!(f, "Cannot #[derive(StructConf)] for the type `{}`", ty)
+            }
+            Conflict(opt1, opt2) => write!(
+                f,
+                "`{}` and `{}` are conflicting attributes",
+                opt1, opt2
+            ),
+            Value(opt, val) => {
+                write!(f, "Invalid value for `{}`: {}", opt, val)
+            }
             Parse(desc) => write!(f, "Couldn't parse attribute: {}", desc),
         }
     }

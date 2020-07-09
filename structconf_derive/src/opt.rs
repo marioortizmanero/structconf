@@ -70,8 +70,8 @@ impl BasicOptAttrs {
                                 span: self.ident.span(),
                                 kind: ErrorKind::Conflict(
                                     orig_name.to_string(),
-                                    confl_name.to_string()
-                                )
+                                    confl_name.to_string(),
+                                ),
                             });
                         }
                     }
@@ -129,24 +129,30 @@ impl BasicOptAttrs {
     /// and whether it was optional or not.
     fn get_type(&self) -> (Type, bool) {
         // Painfully obtaining the type `T` inside `Option<T>` for parsing.
-        use syn::{TypePath, Path};
+        use syn::{Path, TypePath};
 
         // Checking the type is wrapped by an `Option<T>`.
         // eprintln!("TYPE: {:#?}", &self.ty);
-        if let Type::Path(TypePath { path: Path { segments, .. }, .. }) = &self.ty {
-            if segments.len() == 1 && segments.first().unwrap().ident == "Option" {
+        if let Type::Path(TypePath {
+            path: Path { segments, .. },
+            ..
+        }) = &self.ty
+        {
+            if segments.len() == 1
+                && segments.first().unwrap().ident == "Option"
+            {
                 let args = &segments.first().unwrap().arguments;
                 use syn::{
-                    PathArguments::AngleBracketed as PathAngles,
                     AngleBracketedGenericArguments as Brackets,
                     GenericArgument::Type as InnerType,
+                    PathArguments::AngleBracketed as PathAngles,
                 };
 
                 // Obtaining the type inside the `Option<T>`.
                 if let PathAngles(Brackets { args, .. }) = args {
                     if let InnerType(ty) = args.first().unwrap() {
                         // eprintln!("IT'S OPTIONAAAAAAL");
-                        return (ty.clone(), true)
+                        return (ty.clone(), true);
                     }
                 }
             }
@@ -198,10 +204,10 @@ impl BasicOptAttrs {
                             _ => {
                                 return Err(Error {
                                     span: self.ident.span(),
-                                    kind: ErrorKind::Parse(
-                                        String::from("short argument can't \
-                                        be longer than one character")
-                                    )
+                                    kind: ErrorKind::Parse(String::from(
+                                        "short argument can't \
+                                        be longer than one character",
+                                    )),
                                 })
                             }
                         }
