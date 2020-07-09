@@ -46,6 +46,10 @@ jobs:
         - name: Checkout code
           uses: actions/checkout@master
 
-        - name: Publish
+        - name: Publish derive macro
+          env: ${{ secrets.CRATES_IO_TOKEN }}
+          run: cd structconf_derive && cargo publish --token ${CRATES_IO_TOKEN}
+
+        - name: Publish original
           env: ${{ secrets.CRATES_IO_TOKEN }}
           run: cargo publish --token ${CRATES_IO_TOKEN}
