@@ -1,7 +1,6 @@
 use crate::error::{Error, ErrorKind, Result};
 
 use darling::FromField;
-use proc_macro2::Span;
 use quote::quote;
 use syn::{spanned::Spanned, Expr, Field, Ident, Type};
 
@@ -53,7 +52,7 @@ struct BasicOptAttrs {
 }
 
 impl BasicOptAttrs {
-    fn check_conflicts(&self, span: Span) -> Result<()> {
+    fn check_conflicts(&self) -> Result<()> {
         // Given an original expression and a list of other expressions it
         // conflicts with, it returns an error in case both of them are
         // true. The macro makes this a bit less repetitive.
@@ -64,7 +63,7 @@ impl BasicOptAttrs {
                     for (confl, confl_name) in $others.iter() {
                         if *confl {
                             return Err(Error {
-                                span,
+                                span: self.ident.span(),
                                 kind: ErrorKind::Conflict(
                                     orig_name.to_string(),
                                     confl_name.to_string()
@@ -133,7 +132,6 @@ impl BasicOptAttrs {
         }.into())
     }
 
-    // TODO: get span from Ident
     fn parse_file(&self) -> Option<OptFileData> {
         if self.no_file {
             None
@@ -147,7 +145,7 @@ impl BasicOptAttrs {
         }
     }
 
-    fn parse_arg(&self, span: Span) -> Result<Option<OptArgData>> {
+    fn parse_arg(&self) -> Result<Option<OptArgData>> {
         // The long or short values may be empty, meaning that the
         // value should be converted from the field name.
         if self.no_long && self.no_short {
@@ -176,7 +174,7 @@ impl BasicOptAttrs {
                             (Some(ch), None) => Some(ch.to_string()),
                             _ => {
                                 return Err(Error {
-                                    span,
+                                    span: self.ident.span(),
                                     kind: ErrorKind::Parse(
                                         String::from("short argument can't \
                                         be longer than one character")
@@ -207,13 +205,12 @@ impl BasicOptAttrs {
 impl Opt {
     pub fn parse(field: Field) -> Result<Opt> {
         let data = BasicOptAttrs::from_field(&field)?;
-        let span = field.span();
-        data.check_conflicts(span)?;
+        data.check_conflicts()?;
 
         Ok(Opt {
             default: data.parse_default()?,
             file: data.parse_file(),
-            arg: data.parse_arg(span)?,
+            arg: data.parse_arg()?,
             name: data.ident.unwrap(),
             ty: data.ty,
         })
