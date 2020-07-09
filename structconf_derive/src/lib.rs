@@ -186,7 +186,7 @@ fn parse_field_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
         value.extend(quote! {
             match opt {
                 Some(opt) => {
-                    let opt = opt
+                    let mut opt = opt
                         .parse::<#ty>()
                         .map_err(|e| {
                             ::structconf::Error::Parse(e.to_string())

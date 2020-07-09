@@ -6,7 +6,7 @@ use structconf::StructConf;
 #[derive(StructConf)]
 struct Config {
     #[conf(inverse_arg)]
-    pub value: i32,
+    pub value: f64,
 }
 
 fn main() {}

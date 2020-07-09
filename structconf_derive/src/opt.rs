@@ -10,7 +10,6 @@ pub struct OptArgData {
     pub long: Option<String>,
     pub short: Option<String>,
     pub help: Option<String>,
-    pub conf_file: bool,
     pub inverse: bool,
 }
 
@@ -45,8 +44,6 @@ struct BasicOptAttrs {
     help: Option<String>,
     #[darling(default)]
     inverse_arg: bool,
-    #[darling(default)]
-    conf_file: bool,
     #[darling(default)]
     no_file: bool,
     #[darling(default)]
@@ -90,7 +87,6 @@ impl BasicOptAttrs {
                 (self.long.is_some(), "long"),
                 (self.short.is_some(), "short"),
                 (self.help.is_some(), "help"),
-                (self.conf_file, "conf_file"),
                 (self.inverse_arg, "inverse_arg"),
                 (self.file.is_some(), "file"),
                 (self.section.is_some(), "section"),
@@ -112,12 +108,11 @@ impl BasicOptAttrs {
             [
                 (self.inverse_arg, "inverse_arg"),
                 (self.help.is_some(), "help"),
-                (self.conf_file, "conf_file"),
             ]
         );
 
         check_conflicts!(
-            (self.no_file || self.conf_file, "no_file or conf_file"),
+            (self.no_file, "no_file"),
             [
                 (self.file.is_some(), "file"),
                 (self.section.is_some(), "section"),
@@ -140,7 +135,7 @@ impl BasicOptAttrs {
 
     // TODO: get span from Ident
     fn parse_file(&self) -> Option<OptFileData> {
-        if self.no_file || self.conf_file {
+        if self.no_file {
             None
         } else {
             Some(OptFileData {
@@ -204,7 +199,6 @@ impl BasicOptAttrs {
                 short,
                 help: self.help.clone(),
                 inverse: self.inverse_arg,
-                conf_file: self.conf_file,
             }))
         }
     }
