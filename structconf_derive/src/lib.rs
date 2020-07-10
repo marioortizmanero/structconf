@@ -8,12 +8,12 @@ mod error;
 mod opt;
 
 use crate::error::{Error, ErrorKind, Result};
-use crate::opt::{Opt, OptArgData, OptFileData};
+use crate::opt::Opt;
 
 use proc_macro::TokenStream;
-use proc_macro2::{Ident, TokenStream as TokenStream2};
+use proc_macro2::Ident;
 use quote::quote;
-use syn::{Data, DataStruct, DeriveInput, Expr, Fields, FieldsNamed};
+use syn::{Data, DataStruct, DeriveInput, Fields, FieldsNamed};
 
 #[proc_macro_derive(StructConf, attributes(conf))]
 pub fn derive_conf(input: TokenStream) -> TokenStream {
@@ -49,13 +49,27 @@ pub fn derive_conf(input: TokenStream) -> TokenStream {
 }
 
 fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
+    // The fields are parsed into a higher level structure to translate them
+    // into the corresponding `TokenStream`s.
     let mut options = Vec::new();
     for field in fields.named.into_iter() {
         options.push(Opt::parse(field)?);
     }
-    let new_fields = parse_field_init(&options);
-    let new_args = parse_args_init(&options);
-    let to_file = parse_to_file(&options);
+
+    // The iterables needed for the StructConf methods are translated to use
+    // them in the final `quote!`.
+    let mut tok_fields = Vec::new();
+    let mut tok_args = Vec::new();
+    let mut tok_to_file = Vec::new();
+    for opt in options {
+        tok_fields.push(opt.into_field_init()?);
+        if let Some(tok) = opt.into_arg_init() {
+            tok_args.push(tok);
+        }
+        if let Some(tok) = opt.into_to_file() {
+            tok_to_file.push(tok);
+        }
+    }
 
     Ok(quote! {
         impl StructConf for #name {
@@ -71,7 +85,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
                 app: ::clap::App<'a, 'a>
             ) -> ::clap::ArgMatches<'a> {
                 app.args(&[
-                    #(#new_args,)*
+                    #(#tok_args,)*
                 ]).get_matches()
             }
 
@@ -89,7 +103,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
 
                 let file = ::ini::Ini::load_from_file(path)?;
                 Ok(#name {
-                    #(#new_fields,)*
+                    #(#tok_fields,)*
                 })
             }
 
@@ -98,7 +112,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
                 path: &str
             ) -> Result<(), ::structconf::Error> {
                 let mut conf = ::ini::Ini::new();
-                #(#to_file)*
+                #(#tok_to_file)*
                 conf.write_to_file(path)?;
 
                 Ok(())
@@ -106,199 +120,4 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
         }
     }
     .into())
-}
-
-/// This will return a tokenstream for each field that has to be initialized,
-/// depending on whether the option is an argument, a config file option,
-/// none, or both:
-///
-/// ```rust
-/// field: {
-///     // May go through no branches, branch A, branch B, or both branches.
-///     let mut opt: Option<String> = None;
-///
-///     // Branch A (argument)
-///     opt = arg.value_of(...);
-///
-///     // Branch B (config file)
-///     if let None = opt {
-///         opt = file.get_from(...);
-///     }
-///
-///     match opt {
-///         // Branch A, B, or both
-///         Some(opt) => {
-///             // Parse `opt`
-///             let opt = opt.parse()?;
-///         
-///             // Branch A, if `inverse_arg`, after parsing. `inverse_arg`
-///             // may only be true if it's an argument.
-///             if arg.value_of(...).is_some() {
-///                 opt = !opt;
-///             }
-///         },
-///         // None
-///         None => default
-///     }
-/// }
-/// ```
-///
-/// This is intended to be as flexible as possible, and to avoid repetition
-/// in the code, so it may not be optimized for some cases. For example, if
-/// the option is neither a config file option nor an argument, the `match`
-/// block is useless because it's obvious it's going to go through the `None`
-/// branch. But these cases are easy to optimize by the compiler, so it's not
-/// important.
-///
-/// Methods like `unwrap_or` can't be used here because this has to be able
-/// to propagate errors with `?`.
-fn parse_field_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
-    opts.iter()
-        .map(|opt| {
-            let Opt {
-                name,
-                ty,
-                is_option,
-                default,
-                file,
-                arg,
-                ..
-            } = opt;
-
-            // Obtains a TokenStream with what the default value of the option
-            // is going to be. If `default` was used, the expression is used.
-            // Otherwise, the type's default value is used, which may be `None`
-            // in case the type is an `Option<T>`.
-            let default = match default.to_owned() {
-                Some(expr) => {
-                    // TODO remove unwrap
-                    let expr = syn::parse_str::<Expr>(&expr).unwrap();
-                    if *is_option {
-                        quote! { Some(#expr) }
-                    } else {
-                        quote! { #expr }
-                    }
-                }
-                None => {
-                    if *is_option {
-                        quote! { None }
-                    } else {
-                        quote! { ::std::default::Default::default() }
-                    }
-                }
-            };
-
-            let val_ret = if *is_option {
-                quote! { Some(opt) }
-            } else {
-                quote! { opt }
-            };
-
-            let mut value = quote! {
-                let mut opt: Option<&str> = None;
-            };
-
-            let mut invert_opt = TokenStream2::new();
-            if let Some(OptArgData { inverse, .. }) = arg {
-                value.extend(quote! {
-                    opt = args.value_of(stringify!(#name));
-                });
-
-                if *inverse {
-                    invert_opt.extend(quote! {
-                        if args.value_of(stringify!(#name)).is_some() {
-                            opt = !opt;
-                        }
-                    });
-                }
-            }
-
-            if let Some(OptFileData { section, .. }) = file {
-                value.extend(quote! {
-                    if let None = opt {
-                        opt = file.get_from(Some(#section), stringify!(#name));
-                    }
-                });
-            }
-
-            value.extend(quote! {
-                match opt {
-                    Some(opt) => {
-                        let mut opt = opt
-                            .parse::<#ty>()
-                            .map_err(|e| {
-                                ::structconf::Error::Parse(e.to_string())
-                            })?;
-                        #invert_opt
-                        #val_ret
-                    },
-                    None => #default
-                }
-            });
-
-            quote! {
-                #name: { #value }
-            }
-        })
-        .collect()
-}
-
-fn parse_args_init(opts: &Vec<Opt>) -> Vec<TokenStream2> {
-    opts.iter()
-        .filter_map(|opt| {
-            // In case it's not an argument, an empty TokenStream will be
-            // returned.
-            opt.arg.as_ref().and_then(|data| {
-                let name = opt.name.to_string();
-                let mut init = quote! {
-                    ::clap::Arg::with_name(#name)
-                };
-
-                if let Some(help) = &data.help {
-                    init.extend(quote! {
-                        .help(#help)
-                    });
-                }
-
-                if let Some(long) = &data.long {
-                    init.extend(quote! {
-                        .long(#long)
-                    });
-                }
-
-                if let Some(short) = &data.short {
-                    init.extend(quote! {
-                        .short(#short)
-                    });
-                }
-
-                Some(init)
-            })
-        })
-        .collect()
-}
-
-fn parse_to_file(opts: &Vec<Opt>) -> Vec<TokenStream2> {
-    opts.iter()
-        .filter_map(|opt| {
-            opt.file.as_ref().and_then(|file| {
-                let name = opt.name.clone();
-                let section = file.section.as_str();
-
-                Some(if opt.is_option {
-                    quote! {
-                        if let Some(val) = &self.#name {
-                            conf.with_section(Some(#section))
-                                .set(stringify!(#name), val.to_string());
-                        }
-                    }
-                } else {
-                    quote! {
-                        conf.with_section(Some(#section))
-                            .set(stringify!(#name), self.#name.to_string());
-                    }
-                })
-            })
-        })
-        .collect()
 }
