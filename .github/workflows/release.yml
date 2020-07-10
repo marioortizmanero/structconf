@@ -8,18 +8,7 @@ on:
 jobs:
   release:
       name: Upload Assets
-      runs-on: ${{ matrix.os }}
-      strategy:
-        matrix:
-          os: [ubuntu-latest, windows-latest]
-          python: [3.6]
-          include:
-            - os: ubuntu-latest
-              artifact_prefix: linux_x86_64
-            - os: windows-latest
-              artifact_prefix: win10_x86_64
-            - os: macos-latest
-              artifact_prefix: macos_x86_64
+      runs-on: ubuntu-latest
       steps:
         - name: Checkout code
           uses: actions/checkout@v2
@@ -28,18 +17,12 @@ jobs:
           id: tag-name
           uses: olegtarasov/get-tag@v2
 
-        - name: Build
-          run: cargo build --verbose
-
-        - name: Uploading Release Assets
+        - name: Creating GitHub release
           uses: softprops/action-gh-release@v1
-          with:
-            body: ""
-            files: dev/vidify-${{ steps.tag-name.outputs.tag }}_${{ matrix.artifact_prefix }}.zip
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  crates.io:
+  crates:
       name: Upload to Crates.io
       runs-on: ubuntu-latest
       steps:
@@ -47,9 +30,11 @@ jobs:
           uses: actions/checkout@master
 
         - name: Publish derive macro
-          env: ${{ secrets.CRATES_IO_TOKEN }}
-          run: cd structconf_derive && cargo publish --token ${CRATES_IO_TOKEN}
+          env: 
+              CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+          run: cd structconf_derive && cargo publish --token "${CRATES_IO_TOKEN}"
 
         - name: Publish original
-          env: ${{ secrets.CRATES_IO_TOKEN }}
-          run: cargo publish --token ${CRATES_IO_TOKEN}
+          env: 
+              CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+          run: cargo publish --token "${CRATES_IO_TOKEN}"
