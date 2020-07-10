@@ -3,7 +3,7 @@
 <h1>StructConf</h1>
 <span><i>Combine argument parsing with a config file at compile time.</i></span>
 
-<a href="https://github.com/vidify/structconf/actions"><img alt="Build Status" src="https://github.com/vidify/structconf/workflows/Continuous%20Integration/badge.svg"></a>
+<a href="https://github.com/vidify/structconf/actions"><img alt="Build Status" src="https://github.com/vidify/structconf/workflows/Continuous%20Integration/badge.svg"></a> <a alt="crates.io version" href="https://crates.io/crates/structconf"><img src="https://img.shields.io/crates/v/structconf.svg"></a> <a href="https://docs.rs/structconf"><img alt="docs.rs version" src="https://docs.rs/structconf/badge.svg"></a>
 </div>
 
 ---

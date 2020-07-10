@@ -1,3 +1,6 @@
+//! Please visit [docs.rs/structconf](https://docs.rs/structconf/) for the
+//! documentation.
+
 extern crate darling;
 extern crate proc_macro;
 
