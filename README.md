@@ -11,9 +11,10 @@
 StructConf is a derive macro that allows you to combine argument parsing from [clap](https://github.com/clap-rs/clap) and config file parsing from [rust-ini](https://github.com/zonyitoo/rust-ini) at compile time. It's inspired by the argument parser [gumdrop](https://github.com/murarth/gumdrop), and developed to be used in [Vidify](https://github.com/vidify). Example:
 
 ```rust
+use clap::App;
 use structconf::StructConf;
 
-#[derive(StructConf)]
+#[derive(Debug, StructConf)]
 struct Config {
     // Option available in the config file and the arguments
     #[conf(help = "description for the argument parser.")]
@@ -35,6 +36,12 @@ struct Config {
     // Custom default values
     #[conf(default = "123.45")]
     pub floating: f64,
+}
+
+pub fn main() {
+    let app = App::new("demo");
+    let conf = Config::parse(app, "config.ini");
+    println!("Parsed config: {:#?}", conf);
 }
 ```
 

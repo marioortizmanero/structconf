@@ -3,9 +3,10 @@
 //! https://docs.rs/rust-ini/) at compile time. For example:
 //!
 //! ```rust
+//! use clap::App;
 //! use structconf::StructConf;
 //!
-//! #[derive(StructConf)]
+//! #[derive(Debug, StructConf)]
 //! struct Config {
 //!     // Option available in the config file and the arguments
 //!     #[conf(help = "description for the argument parser.")]
@@ -27,6 +28,12 @@
 //!     // Custom default values
 //!     #[conf(default = "123.45")]
 //!     pub floating: f64,
+//! }
+//!
+//! pub fn main() {
+//!     let app = App::new("demo");
+//!     let conf = Config::parse(app, "config.ini");
+//!     println!("Parsed config: {:#?}", conf);
 //! }
 //! ```
 //!

@@ -8,9 +8,7 @@ documentation = "https://docs.rs/structconf/"
 description = "Combine clap and rust-ini into a single procedural macro"
 homepage = "https://github.com/vidify/structconf"
 repository = "https://github.com/vidify/structconf"
-keywords = [
-    "config", "configuration", "settings", "clap", "rust-ini"
-]
+keywords = ["config", "configuration", "settings", "clap", "rust-ini"]
 categories = ["config"]
 license = "MIT"
 readme = "README.md"

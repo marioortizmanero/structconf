@@ -1,2 +1,5 @@
 target
 Cargo.lock
+
+# Custom: any config files created by tests or examples are ignored
+*.ini
