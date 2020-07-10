@@ -24,6 +24,9 @@ structconf_derive = { version = "0.1.2", path = "structconf_derive" }
 
 [dev-dependencies]
 trybuild = { version = "1.0", features = ["diff"] }
+dirs = "3.0.0"
+strum = "0.18.0"
+strum_macros = "0.18.0"
 
 [[test]]
 name = "tests"
