@@ -1,7 +1,6 @@
 //! StructConf is a derive macro to combine argument parsing from
-//! [clap](https://github.com/clap-rs/clap) and config file parsing from
-//! [rust-ini](https://github.com/zonyitoo/rust-ini) at compile time. For
-//! example:
+//! [clap](https://docs.rs/clap/) and config file parsing from [rust-ini](
+//! https://docs.rs/rust-ini/) at compile time. For example:
 //!
 //! ```rust
 //! use structconf::StructConf;
@@ -31,28 +30,40 @@
 //! }
 //! ```
 //!
-//! Additional attributes can be added to its fields to customize how they are
-//! parsed:
+//! Any named struct that uses `#[derive(StructConf)]` will have the methods
+//! from [`structconf::StructConf`](
+//! https://docs.rs/structconf/latest/structconf/trait.StructConf.html)
+//! available.
+//!
+//! Additional attributes can be added to its fields to customize how they
+//! are parsed:
 //!
 //! ## General attributes
-//! * `default = "..."`: a Rust expression that will be evaluated when the
-//! option isn't found in the argument parser or the config file. For example,
-//! `default = "1+2"`, or `default = "hello"`. Otherwise, the value given by
-//! [`std::default::Default`](https://doc.rust-lang.org/std/default/trait.Default.html)
-//! will be used.
+//! * `default = "..."`: a Rust expression that will be evaluated as a
+//! fallback value. For example, `default = "1+2"`, or
+//! `default = "String::from(\"hello\"")`. Otherwise, the value given by
+//! [`std::default::Default`](
+//! https://doc.rust-lang.org/std/default/trait.Default.html) will be used,
+//! or in case the assigned type is `Option<T>`\*, `None`.
+//!
+//! \* *Note: the assigned type must be exactly `Option<T>` for this to work.
+//! `std::option::Option<T>` won't work, for example.*
 //!
 //! ## Argument parser attributes
-//! * `help = "..."`: the help message shown in the argument parser.
+//! * `help = "..."`: the help message shown in the argument parser when
+//! `--help` is used.
 //! * `long = "arg_name"`: a custom long argument name. Otherwise, it will be
 //! obtained directly from the field's name. `do_something` will be
 //! `--do-something`.
-//! * `no_long`: the option won't include the option as a long argument.
+//! * `no_long`: don't include the option as a long argument.
 //! * `short = "x"`: a custom short argument name (only made up of a single
 //! character). Otherwise, it will be obtained directly from the field's
 //! name. `do_something` will be `-d`.
-//! * `no_short`: the option won't include the option as a short argument.
-//! * `inverse_arg`: the argument value is the opposite. This is useful for
-//! arguments where the argument's value is inverted:
+//! * `no_short`: don't include the option as a short argument.
+//! * `inverse_arg`: the argument value is the opposite. The assigned type
+//! must implement [`std::ops::Not`](
+//! https://doc.rust-lang.org/std/ops/trait.Not.html). This is useful for
+//! arguments where the argument's value is negated:
 //!
 //! ```rust
 //! use structconf::StructConf;
@@ -65,13 +76,12 @@
 //! ```
 //!
 //! If both `no_long` and `no_short` are provided, the option won't be
-//! available in the argument parser.
+//! available in the argument parser at all.
 //!
 //! ## Config file attributes
 //! * `file = "..."`: a custom option name for the config file. Otherwise, it
 //! will be the same as the field's name.
-//! * `no_file` can be provided to not have the option available in the config
-//! file.
+//! * `no_file`: son't include the option in the config file.
 //! * `section`: the section in the config file where the option will be.
 //! Otherwise, `Default` is used. For example,
 //! `#[structconf(section = "Planes")] model_id: i32` will look like this in
@@ -121,24 +131,36 @@ impl From<ini::ini::Error> for Error {
     }
 }
 
+/// This trait implements the methods available after using
+/// `#[derive(StructConf)]`:
 pub trait StructConf {
     /// Instantiate the structure from both the argument parser and the
-    /// config file. This can also be done in two steps with `parse_args`
-    /// and `parse_config`, which makes it possible to have an argument
-    /// with the config file path.
+    /// config file, falling back to the default values.
+    ///
+    /// The priority followed for the configuration is "arguments >
+    /// config file > default values".
+    ///
+    /// The `path` argument is where the config file will be. If it doesn't
+    /// exist, it will be created, and a message to stderr will be printed.
     fn parse(app: clap::App, path: &str) -> Result<Self, Error>
     where
         Self: Sized;
-    /// Parses only the arguments with clap.
+
+    /// Parses only the arguments with [clap](
+    /// https://docs.rs/clap/2.33.1/clap/). This is useful for a
+    /// `--config-file` argument to allow the user to choose the config
+    /// file location.
     fn parse_args<'a>(app: clap::App<'a, 'a>) -> clap::ArgMatches<'a>;
+
     /// With the argument matches returned by `parse_args`, the config
-    /// file is read, and the struct is constructed with the default values
+    /// file is read, and the struct is initialized with the default values
     /// taken into account.
     ///
     /// This also serves as a function to refresh the config file values.
     fn parse_file(args: clap::ArgMatches, path: &str) -> Result<Self, Error>
     where
         Self: Sized;
-    /// Writes *all* the config file options into a file.
+
+    /// Writes the structure values into a config file.
     fn write_file(&self, path: &str) -> Result<(), Error>;
 }

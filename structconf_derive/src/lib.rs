@@ -84,7 +84,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
                 let path_wrap = ::std::path::Path::new(path);
                 if !path_wrap.exists() {
                     ::std::fs::File::create(&path_wrap)?;
-                    println!("Created config file at {}", path);
+                    eprintln!("Created config file at {}", path);
                 }
 
                 let file = ::ini::Ini::load_from_file(path)?;

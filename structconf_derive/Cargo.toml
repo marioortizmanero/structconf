@@ -1,6 +1,6 @@
 [package]
 name = "structconf_derive"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Mario Ortiz Manero <marioortizmanero@gmail.com>"]
 edition = "2018"
 
