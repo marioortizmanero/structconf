@@ -1,0 +1,5 @@
+error: Couldn't parse attribute: short argument can't be longer than one character
+ --> $DIR/short_nochar.rs:8:9
+  |
+8 |     pub value: bool,
+  |         ^^^^^

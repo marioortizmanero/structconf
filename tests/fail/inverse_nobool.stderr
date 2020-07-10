@@ -1,0 +1,7 @@
+error[E0600]: cannot apply unary operator `!` to type `f64`
+ --> $DIR/inverse_nobool.rs:6:10
+  |
+6 | #[derive(StructConf)]
+  |          ^^^^^^^^^^ cannot apply unary operator `!`
+  |
+  = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)

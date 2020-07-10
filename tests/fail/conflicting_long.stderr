@@ -1,0 +1,5 @@
+error: `no_long` and `long` are conflicting attributes
+ --> $DIR/conflicting_long.rs:8:9
+  |
+8 |     pub value: bool,
+  |         ^^^^^

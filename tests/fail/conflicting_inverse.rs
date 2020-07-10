@@ -5,7 +5,7 @@ use structconf::StructConf;
 
 #[derive(StructConf)]
 struct Config {
-    #[conf(no_short, no_long, inverted_arg)]
+    #[conf(no_short, no_long, inverse_arg)]
     pub value: bool,
 }
 

@@ -1,0 +1,5 @@
+error: `no_short` and `short` are conflicting attributes
+ --> $DIR/conflicting_short.rs:8:9
+  |
+8 |     pub value: bool,
+  |         ^^^^^

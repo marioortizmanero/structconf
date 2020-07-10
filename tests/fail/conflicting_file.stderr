@@ -1,0 +1,5 @@
+error: `no_file` and `file` are conflicting attributes
+ --> $DIR/conflicting_file.rs:8:9
+  |
+8 |     pub value: bool,
+  |         ^^^^^
