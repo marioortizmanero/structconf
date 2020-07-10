@@ -78,7 +78,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
                 path: &str
             ) -> Result<#name, ::structconf::Error> where Self: Sized {
                 let args = #name::parse_args(app);
-                #name::parse_file(args, path)
+                #name::parse_file(&args, path)
             }
 
             fn parse_args<'a>(
@@ -90,7 +90,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
             }
 
             fn parse_file(
-                args: ::clap::ArgMatches,
+                args: &::clap::ArgMatches,
                 path: &str
             ) -> Result<#name, ::structconf::Error> where Self: Sized {
                 // Checking that the config file exists, and creating it

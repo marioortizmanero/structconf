@@ -157,7 +157,7 @@ pub trait StructConf {
     /// taken into account.
     ///
     /// This also serves as a function to refresh the config file values.
-    fn parse_file(args: clap::ArgMatches, path: &str) -> Result<Self, Error>
+    fn parse_file(args: &clap::ArgMatches, path: &str) -> Result<Self, Error>
     where
         Self: Sized;
 
