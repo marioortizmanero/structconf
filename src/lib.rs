@@ -19,7 +19,7 @@
 //!     #[conf(no_short, no_long, no_file)]
 //!     pub ignored: bool,
 //!     // Customize the names
-//!     #[conf(short = "x", long = "renamed-opt", file = "my_opt",
+//!     #[conf(short = "x", long = "renamed_opt", file = "my_opt",
 //!            help = "custom names.")]
 //!     pub renamed: String,
 //!     // Inverse arguments

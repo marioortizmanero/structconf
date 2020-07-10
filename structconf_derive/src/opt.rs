@@ -185,7 +185,8 @@ impl BasicOptAttrs {
             let long: Option<String> = if self.no_long {
                 None
             } else {
-                Some(self.long.to_owned().unwrap_or_else(get_ident))
+                let long = self.long.to_owned().unwrap_or_else(get_ident);
+                Some(long.replace("_", "-"))
             };
 
             let short = if self.no_short {
