@@ -2,6 +2,7 @@
 
 use structconf::StructConf;
 
+#[allow(dead_code)]
 #[derive(StructConf)]
 struct Config {
     #[conf(no_short)]
@@ -12,4 +13,5 @@ struct Config {
     val_tok: bool,
 }
 
-fn main() {}
+#[test]
+fn attr_parsing() {}

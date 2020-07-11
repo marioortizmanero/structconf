@@ -168,6 +168,6 @@ pub trait StructConf {
     where
         Self: Sized;
 
-    /// Writes the structure values into a config file.
+    /// Writes the structure's values into a config file.
     fn write_file(&self, path: &str) -> Result<(), Error>;
 }

@@ -8,7 +8,7 @@
 
 ---
 
-StructConf is a derive macro that allows you to combine argument parsing from [clap](https://github.com/clap-rs/clap) and config file parsing from [rust-ini](https://github.com/zonyitoo/rust-ini) at compile time. It's inspired by the argument parser [gumdrop](https://github.com/murarth/gumdrop), and developed to be used in [Vidify](https://github.com/vidify). Example:
+StructConf is a small derive macro that allows you to combine argument parsing from [clap](https://github.com/clap-rs/clap) and config file parsing from [rust-ini](https://github.com/zonyitoo/rust-ini) at compile time. It's inspired by the argument parser [structopt](https://github.com/TeXitoi/structopt), and developed to be used in [Vidify](https://github.com/vidify). Example:
 
 ```rust
 use clap::App;

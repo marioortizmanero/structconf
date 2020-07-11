@@ -3,10 +3,12 @@
 
 use structconf::StructConf;
 
+#[allow(dead_code)]
 #[derive(StructConf)]
 struct Config {
     #[conf(no_file, no_short, no_long)]
     ignore_all: i32,
 }
 
-fn main() {}
+#[test]
+fn empty() {}

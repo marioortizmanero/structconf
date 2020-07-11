@@ -3,6 +3,7 @@
 
 use structconf::StructConf;
 
+#[allow(dead_code)]
 #[derive(StructConf)]
 struct Config {
     #[conf(default = "123")]
@@ -15,4 +16,5 @@ struct Config {
     str1: String,
 }
 
-fn main() {}
+#[test]
+fn default() {}

@@ -2,9 +2,11 @@
 
 use structconf::StructConf;
 
+#[allow(dead_code)]
 #[derive(StructConf)]
 struct Config {
     nothing: bool,
 }
 
-fn main() {}
+#[test]
+fn basic() {}

@@ -5,6 +5,7 @@ use std::fmt;
 use std::str::FromStr;
 use structconf::StructConf;
 
+#[allow(dead_code)]
 enum MyEnum {
     One,
     Two,
@@ -31,6 +32,7 @@ impl Default for MyEnum {
     }
 }
 
+#[allow(dead_code)]
 #[derive(StructConf)]
 struct Config {
     a: Option<i32>,
@@ -49,4 +51,5 @@ struct Config {
     j: Option<String>,
 }
 
-fn main() {}
+#[test]
+fn option() {}
