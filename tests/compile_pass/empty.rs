@@ -10,5 +10,4 @@ struct Config {
     ignore_all: i32,
 }
 
-#[test]
-fn empty() {}
+fn main() {}

@@ -13,5 +13,4 @@ struct Config {
     val_tok: bool,
 }
 
-#[test]
-fn attr_parsing() {}
+fn main() {}

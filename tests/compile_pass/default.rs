@@ -16,5 +16,4 @@ struct Config {
     str1: String,
 }
 
-#[test]
-fn default() {}
+fn main() {}

@@ -8,5 +8,4 @@ struct Config {
     nothing: bool,
 }
 
-#[test]
-fn basic() {}
+fn main() {}

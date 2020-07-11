@@ -9,5 +9,4 @@ struct Config {
     thing: bool,
 }
 
-#[test]
-fn inverse_arg() {}
+fn main() {}

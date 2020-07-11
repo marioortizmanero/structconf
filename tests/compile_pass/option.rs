@@ -51,5 +51,4 @@ struct Config {
     j: Option<String>,
 }
 
-#[test]
-fn option() {}
+fn main() {}
