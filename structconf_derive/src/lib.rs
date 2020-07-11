@@ -81,12 +81,27 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
                 #name::parse_file(&args, path)
             }
 
+            // Using `parse_args_from` reduces the size of the binary
+            // considerably.
             fn parse_args<'a>(
                 app: ::clap::App<'a, 'a>
             ) -> ::clap::ArgMatches<'a> {
+                #name::parse_args_from(
+                    app,
+                    &mut ::std::env::args()
+                )
+            }
+
+            fn parse_args_from<'a, I, T>(
+                app: clap::App<'a, 'a>,
+                iter: I,
+            ) -> clap::ArgMatches<'a>
+                where
+                    I: IntoIterator<Item = T>,
+                    T: Into<::std::ffi::OsString> + Clone {
                 app.args(&[
                     #(#tok_args,)*
-                ]).get_matches()
+                ]).get_matches_from(iter)
             }
 
             fn parse_file(

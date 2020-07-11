@@ -5,11 +5,18 @@
 
 use std::default::Default;
 use std::fmt;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::Write;
 use structconf::{StructConf, Error};
 use std::str::FromStr;
 use strum_macros::{Display, EnumString};
+
+/// Handy macro to make sure the test files are cleaned between runs.
+macro_rules! setup_file {
+    ($name:expr) => {
+        fs::remove_file($name).unwrap();
+    }
+}
 
 /// Defining an enum to use in a StructConf-derived structure.
 /// The `strum` crate takes care of the automatic conversion to and from
@@ -73,6 +80,8 @@ struct Config {
     no_long: bool,
     #[conf(no_short, no_long)]
     no_short_no_long: bool,
+    #[conf(no_short, no_long, no_file)]
+    empty: i32,
     #[conf(file = "new_file")]
     file: bool,
     #[conf(long = "name")]
@@ -93,9 +102,12 @@ struct Config {
     option_string: Option<String>,
 }
 
+/// Reading values from the configuration file
 #[test]
 fn file_read() {
     const FILE_NAME: &str = "file_read.ini";
+    setup_file!(FILE_NAME);
+
     let mut f = File::create(FILE_NAME).unwrap();
     // `no_file` should be 0 because this option isn't available in the
     // config file.
@@ -123,10 +135,12 @@ fn file_read() {
     assert_eq!(conf.combined, true);
 }
 
-/// Testing the errors that may be thrown when parsing the config.
+/// Testing the errors that may be thrown when parsing the config
 #[test]
 fn errors() {
     const FILE_NAME: &str = "errors.ini";
+    setup_file!(FILE_NAME);
+
     // Checking errors when parsing the config file
     let mut f = File::create(FILE_NAME).unwrap();
     f.write(b"
@@ -150,10 +164,12 @@ fn errors() {
     }
 }
 
-/// Testing parsing for custom structures.
+/// Testing parsing for custom structures
 #[test]
-fn custom() {
-    const FILE_NAME: &str = "custom.ini";
+fn custom_types() {
+    const FILE_NAME: &str = "custom_types.ini";
+    setup_file!(FILE_NAME);
+
     // Making sure the default values work.
     let mut f = File::create(FILE_NAME).unwrap();
     f.write(b"
@@ -186,6 +202,8 @@ fn custom() {
 #[test]
 fn write_file() {
     const FILE_NAME: &str = "write_file.ini";
+    setup_file!(FILE_NAME);
+
     // Writing values into the file
     let app = clap::App::new("test");
     let args = Config::parse_args(app);
@@ -210,17 +228,73 @@ fn inverse_arg() {
     // TODO
 }
 
+/// Making sure an empty field isn't included in the config file or the
+/// argument parser.
 #[test]
 fn empty_field() {
-    // TODO
+    const FILE_NAME: &str = "empty_field.ini";
+    setup_file!(FILE_NAME);
+
+    let mut f = File::create(FILE_NAME).unwrap();
+    f.write(b"
+    [Defaults]
+    empty = 1234
+    ").unwrap();
+
+    let app = clap::App::new("test");
+    let args = Config::parse_args(app);
+    let conf = Config::parse_file(&args, FILE_NAME).unwrap();
+    // Should take the default value after parsing the config file and the
+    // arguments.
+    assert_eq!(conf.empty, 0);
 }
 
+// Options in `Option<T>` should be handled as expected.
 #[test]
-fn default() {
-    // TODO
-}
+fn optionals() {
+    const FILE_NAME: &str = "optionals.ini";
+    setup_file!(FILE_NAME);
 
-#[test]
-fn option() {
-    // TODO
+    // First all of them should be None because the file is empty
+    let app = clap::App::new("test");
+    let conf = Config::parse(app, FILE_NAME).unwrap();
+    assert_eq!(conf.option_i32, None);
+    assert_eq!(conf.option_enum, None);
+    assert_eq!(conf.option_string, None);
+
+    // Some values are writte into the config file and it's parsed again.
+    let mut f = File::create(FILE_NAME).unwrap();
+    f.write(b"
+    [Defaults]
+    option_i32 = 1234
+    option_enum = Three
+    option_string = some text goes here
+    ").unwrap();
+
+    // The new values should appear under `Some`.
+    let app = clap::App::new("test");
+    let conf = Config::parse(app, FILE_NAME).unwrap();
+    assert_eq!(conf.option_i32, Some(1234));
+    assert_eq!(conf.option_enum, Some(MyEnum::Three));
+    assert_eq!(conf.option_string, Some(String::from("some text goes here")));
+
+    // Writing some optional values. Only those that aren't `None` should
+    // be written into it.
+    let app = clap::App::new("test");
+    let mut conf = Config::parse(app, FILE_NAME).unwrap();
+    let written_i32 = None;
+    let written_enum = Some(MyEnum::Two);
+    let written_string = Some(String::from("value"));
+
+    conf.option_i32 = written_i32;
+    conf.option_enum = written_enum.clone();
+    conf.option_string = written_string.clone();
+    fs::remove_file(FILE_NAME).unwrap();
+    conf.write_file(FILE_NAME).unwrap();
+
+    let app = clap::App::new("test");
+    let conf = Config::parse(app, FILE_NAME).unwrap();
+    assert_eq!(conf.option_i32, written_i32);
+    assert_eq!(conf.option_enum, written_enum);
+    assert_eq!(conf.option_string, written_string);
 }

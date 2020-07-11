@@ -103,6 +103,7 @@ pub use structconf_derive::StructConf;
 
 use std::fmt;
 use std::io;
+use std::ffi::OsString;
 
 /// Small wrapper for the possible errors that may occur when parsing a
 /// StructConf-derived struct.
@@ -139,13 +140,14 @@ impl From<ini::ini::Error> for Error {
 }
 
 /// This trait implements the methods available after using
-/// `#[derive(StructConf)]`:
+/// `#[derive(StructConf)]`.
+///
+/// The priority followed for the configuration is "arguments > config file >
+/// default values".
 pub trait StructConf {
     /// Instantiate the structure from both the argument parser and the
-    /// config file, falling back to the default values.
-    ///
-    /// The priority followed for the configuration is "arguments >
-    /// config file > default values".
+    /// config file, falling back to the default values. Equivalent to
+    /// calling `parse_args` and then `parse_file`.
     ///
     /// The `path` argument is where the config file will be. If it doesn't
     /// exist, it will be created, and a message to stderr will be printed.
@@ -157,17 +159,32 @@ pub trait StructConf {
     /// https://docs.rs/clap/2.33.1/clap/). This is useful for a
     /// `--config-file` argument to allow the user to choose the config
     /// file location.
+    ///
+    /// This is equivalent to `parse_args_from(..., &mut std::env::args())`.
     fn parse_args<'a>(app: clap::App<'a, 'a>) -> clap::ArgMatches<'a>;
 
-    /// With the argument matches returned by `parse_args`, the config
-    /// file is read, and the struct is initialized with the default values
-    /// taken into account.
+    /// Parses only the arguments with [clap](
+    /// https://docs.rs/clap/2.33.1/clap/) from an iterator.
+    fn parse_args_from<'a, I, T>(
+        app: clap::App<'a, 'a>,
+        iter: I,
+    ) -> clap::ArgMatches<'a>
+        where
+            I: IntoIterator<Item = T>,
+            T: Into<OsString> + Clone;
+
+    /// The config file is read after parsing the arguments, and the struct
+    /// is initialized with the default values taken into account.
+    ///
+    /// The `path` argument is where the config file will be. If it doesn't
+    /// exist, it will be created, and a message to stderr will be printed.
     ///
     /// This also serves as a function to refresh the config file values.
     fn parse_file(args: &clap::ArgMatches, path: &str) -> Result<Self, Error>
     where
         Self: Sized;
 
-    /// Writes the structure's values into a config file.
+    /// Writes the structure's values into a config file, except for those
+    /// that are wrapped by `Option` and whose value is `None`.
     fn write_file(&self, path: &str) -> Result<(), Error>;
 }
