@@ -9,7 +9,8 @@ mod error;
 mod opt;
 
 use crate::error::{Error, ErrorKind, Result};
-use crate::opt::Opt;
+use crate::opt::*;
+use crate::attrs::*;
 
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
@@ -55,7 +56,8 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
     // into the corresponding `TokenStream`s.
     let mut options = Vec::new();
     for field in fields.named.into_iter() {
-        options.push(Opt::parse(field)?);
+        let attr = BasicOptAttrs::init(field)?;
+        options.push(attr.parse_opt()?)
     }
     check_conflicts(&options)?;
 
@@ -141,7 +143,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
 }
 
 // Looks for conflicts in the options as a whole, like repeated IDs.
-fn check_conflicts(opts: &Vec<Opt>) -> Result<()> {
+fn check_conflicts(opts: &Vec<&dyn Opt>) -> Result<()> {
     let mut files = HashSet::new();
     let mut longs = HashSet::new();
     let mut shorts = HashSet::new();
@@ -158,7 +160,17 @@ fn check_conflicts(opts: &Vec<Opt>) -> Result<()> {
     }
 
     for opt in opts {
-        let span = opt.name.span();
+        let span = opt.base().name.span();
+        match opt {
+            OptArg => {
+            },
+            OptFile => {
+                try_insert!(files, file.name.clone(), span, "file");
+            },
+            OptBoth => {
+
+            }
+        }
         if let Some(file) = opt.file.as_ref() {
             try_insert!(files, file.name.clone(), span, "file");
         }

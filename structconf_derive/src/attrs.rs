@@ -4,7 +4,7 @@
 //! structure defined later.
 
 use crate::error::{Error, ErrorKind, Result};
-use crate::opt::{OptArgData, OptFileData};
+use crate::opt::*;
 
 use darling::FromField;
 use syn::{spanned::Spanned, Field, Ident, Type, Path, TypePath};
@@ -246,6 +246,40 @@ impl BasicOptAttrs {
                 help: self.help.clone(),
                 inverse: self.inverse_arg,
             }))
+        }
+    }
+
+    pub fn parse_opt(&self) -> Result<&dyn Opt> {
+        let base = OptBaseData {
+            takes_value: self.takes_value(),
+            is_option: self.is_option,
+            default: self.default,
+            name: self.ident.unwrap(),
+            ty: self.ty,
+        };
+        let arg = self.parse_arg()?;
+        let file = self.parse_file();
+
+        if arg.is_none() && file.is_none() {
+            Ok(&OptNone {
+                base
+            })
+        } else if arg.is_some() && file.is_none() {
+            Ok(&OptArg {
+                base,
+                arg: arg.unwrap(),
+            })
+        } else if arg.is_none() && file.is_some() {
+            Ok(&OptFile {
+                base,
+                file: file.unwrap(),
+            })
+        } else {
+            Ok(&OptBoth {
+                base,
+                arg: arg.unwrap(),
+                file: file.unwrap()
+            })
         }
     }
 }
