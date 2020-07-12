@@ -20,41 +20,38 @@ use syn::{Data, DataStruct, DeriveInput, Fields, FieldsNamed};
 
 #[proc_macro_derive(StructConf, attributes(conf))]
 pub fn derive_conf(input: TokenStream) -> TokenStream {
-    // Construct a representation of Rust code as a syntax tree
-    // that we can manipulate
     let ast: DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
+    let span = name.span();
 
     // Build the trait implementation
-    let result: Result<TokenStream> = match ast.data {
+    let result = match ast.data {
         Data::Struct(DataStruct {
             fields: Fields::Named(named_fields),
             ..
         }) => impl_conf_macro(name, named_fields),
         Data::Struct(_) => Err(Error {
             kind: ErrorKind::DeriveType(String::from("unnamed struct")),
-            span: ast.ident.span(),
+            span,
         }),
         Data::Enum(_) => Err(Error {
             kind: ErrorKind::DeriveType(String::from("enum")),
-            span: ast.ident.span(),
+            span,
         }),
         Data::Union(_) => Err(Error {
             kind: ErrorKind::DeriveType(String::from("union")),
-            span: ast.ident.span(),
+            span,
         }),
     };
 
     match result {
-        Ok(tokens) => tokens.into(),
+        Ok(tokens) => tokens,
         Err(e) => syn::Error::from(e).to_compile_error().into(),
     }
 }
 
 fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
-    // An option may be empty, an argument, or from the config file. It
-    // might also be both an argument and from the config file separately,
-    // so they have to be mixed together in this function.
+    // Obtaining the basic attributes from the fields.
     let mut options = Vec::new();
     let mut tok_fields = Vec::new();
     for field in fields.named.into_iter() {
@@ -87,6 +84,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
             options.push(opt);
         }
     }
+
     check_conflicts(&options)?;
 
     let mut tok_args = Vec::new();
@@ -100,18 +98,19 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
         }
     }
 
-    Ok(quote! {
+    let trait_impl = quote! {
         impl StructConf for #name {
             fn parse(
                 app: ::clap::App,
                 path: &str
-            ) -> Result<#name, ::structconf::Error> where Self: Sized {
+            ) -> Result<#name, ::structconf::Error>
+                where
+                    Self: Sized
+            {
                 let args = #name::parse_args(app);
                 #name::parse_file(&args, path)
             }
 
-            // Using `parse_args_from` reduces the size of the binary
-            // considerably.
             fn parse_args<'a>(
                 app: ::clap::App<'a, 'a>
             ) -> ::clap::ArgMatches<'a> {
@@ -162,8 +161,9 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
                 Ok(())
             }
         }
-    }
-    .into())
+    };
+
+    Ok(trait_impl.into())
 }
 
 // Looks for conflicts in the options as a whole, like repeated IDs.
@@ -187,7 +187,7 @@ fn check_conflicts(opts: &Vec<Opt>) -> Result<()> {
         let span = opt.base.name.span();
         match &opt.kind {
             OptKind::Empty => {}
-            OptKind::Arg(arg) => {
+            OptKind::Flag(arg) | OptKind::Arg(arg) => {
                 if let Some(short) = &arg.short {
                     try_insert!(shorts, short.clone(), span, "short");
                 }

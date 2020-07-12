@@ -11,7 +11,6 @@ pub struct OptBaseData {
     pub ty: Type,
     pub is_option: bool,
     pub default: Option<String>,
-    pub takes_value: bool,
 }
 
 pub struct OptArgData {
@@ -30,6 +29,7 @@ pub struct OptFileData {
 pub enum OptKind {
     Empty,
     Arg(OptArgData),
+    Flag(OptArgData),
     File(OptFileData),
 }
 
@@ -113,28 +113,25 @@ impl Opt {
                     }
                 })
             }
-            OptKind::Arg(OptArgData { inverse, .. }) => {
-                if self.base.takes_value {
-                    Ok(quote! {
-                        if let Some(val) = args.value_of(stringify!(#name)) {
-                            #parse
-                            #ret
-                        }
-                    })
+            OptKind::Flag(OptArgData { inverse, .. }) => {
+                let ret = if *inverse {
+                    quote! { false }
                 } else {
-                    let ret = if *inverse {
-                        quote! { false }
-                    } else {
-                        quote! { true }
-                    };
+                    quote! { true }
+                };
 
-                    Ok(quote! {
-                        if args.is_present(stringify!(#name)) {
-                            #ret
-                        }
-                    })
-                }
+                Ok(quote! {
+                    if args.is_present(stringify!(#name)) {
+                        #ret
+                    }
+                })
             }
+            OptKind::Arg(_) => Ok(quote! {
+                if let Some(val) = args.value_of(stringify!(#name)) {
+                    #parse
+                    #ret
+                }
+            }),
             OptKind::File(OptFileData { name, section }) => Ok(quote! {
                 if let Some(val) = file.get_from(Some(#section), #name) {
                     #parse
@@ -172,7 +169,7 @@ impl Opt {
                 });
             }
 
-            if self.base.takes_value {
+            if let OptKind::Arg(_) = self.kind {
                 init.extend(quote! {
                     .takes_value(true)
                 });
