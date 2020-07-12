@@ -12,7 +12,8 @@ pub struct Error {
 #[derive(Debug)]
 pub enum ErrorKind {
     DeriveType(String),
-    Conflict(String, String),
+    ConflictAttrs(String, String),
+    ConflictIDs(String, String),
     Value(String, String),
     Parse(String),
 }
@@ -25,10 +26,16 @@ impl fmt::Display for Error {
             DeriveType(ty) => {
                 write!(f, "Cannot #[derive(StructConf)] for the type `{}`", ty)
             }
-            Conflict(opt1, opt2) => write!(
+            ConflictAttrs(opt1, opt2) => write!(
                 f,
                 "`{}` and `{}` are conflicting attributes",
                 opt1, opt2
+            ),
+            ConflictIDs(attr, val) => write!(
+                f,
+                "The `{}` attribute with value `{}` is repeated with another \
+                field.",
+                attr, val
             ),
             Value(opt, val) => {
                 write!(f, "Invalid value for `{}`: {}", opt, val)

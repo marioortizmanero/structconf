@@ -1,0 +1,5 @@
+error: The `short` attribute with value `n` is repeated with another field.
+ --> $DIR/repeated_short.rs:9:9
+  |
+9 |     pub name2: bool,
+  |         ^^^^^

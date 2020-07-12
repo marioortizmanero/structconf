@@ -70,7 +70,7 @@ impl BasicOptAttrs {
                         if *confl {
                             return Err(Error {
                                 span: self.ident.span(),
-                                kind: ErrorKind::Conflict(
+                                kind: ErrorKind::ConflictAttrs(
                                     orig_name.to_string(),
                                     confl_name.to_string(),
                                 ),

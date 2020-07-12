@@ -13,6 +13,7 @@ use crate::opt::Opt;
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use quote::quote;
+use std::collections::HashSet;
 use syn::{Data, DataStruct, DeriveInput, Fields, FieldsNamed};
 
 #[proc_macro_derive(StructConf, attributes(conf))]
@@ -55,6 +56,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
     for field in fields.named.into_iter() {
         options.push(Opt::parse(field)?);
     }
+    check_conflicts(&options)?;
 
     // The iterables needed for the StructConf methods are translated to use
     // them in the final `quote!`.
@@ -135,4 +137,38 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
         }
     }
     .into())
+}
+
+// Looks for conflicts in the options as a whole, like repeated IDs.
+fn check_conflicts(opts: &Vec<Opt>) -> Result<()> {
+    let mut names = HashSet::new();
+    let mut longs = HashSet::new();
+    let mut shorts = HashSet::new();
+
+    macro_rules! try_insert {
+        ($iter:expr, $new:expr, $span:expr, $err_id:expr) => {
+            if !$iter.insert($new) {
+                return Err(Error {
+                    kind: ErrorKind::ConflictIDs($err_id.to_string(), $new),
+                    span: $span
+                })
+            }
+        }
+    }
+
+    for opt in opts {
+        let span = opt.name.span();
+        try_insert!(names, opt.name.to_string(), span, "file");
+
+        if let Some(arg) = opt.arg.as_ref() {
+            if let Some(val) = arg.long.as_ref() {
+                try_insert!(longs, val.clone(), span, "long");
+            }
+            if let Some(val) = arg.short.as_ref() {
+                try_insert!(shorts, val.clone(), span, "short");
+            }
+        }
+    }
+
+    Ok(())
 }
