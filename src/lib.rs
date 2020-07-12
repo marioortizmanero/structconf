@@ -1,38 +1,26 @@
 //! StructConf is a derive macro to combine argument parsing from
 //! [clap](https://docs.rs/clap/) and config file parsing from [rust-ini](
-//! https://docs.rs/rust-ini/) at compile time. For example:
+//! https://docs.rs/rust-ini/) at compile time. Here's a very simple example (see
+//! more detailed examples on [the GitHub repo](
+//! https://github.com/vidify/structconf/tree/master/examples)):
 //!
 //! ```rust
 //! use clap::App;
 //! use structconf::StructConf;
 //!
 //! #[derive(Debug, StructConf)]
-//! struct Config {
-//!     // Option available in the config file and the arguments
-//!     #[conf(help = "description for the argument parser.")]
-//!     pub default: i32,
-//!     // Specify where the options are available.
-//!     #[conf(no_file)]
-//!     pub args_opt: u8,
-//!     #[conf(no_short, no_long)]
-//!     pub conf_opt: Option<String>,
-//!     #[conf(no_short, no_long, no_file)]
-//!     pub ignored: bool,
-//!     // Customize the names
-//!     #[conf(short = "x", long = "renamed_opt", file = "my_opt",
-//!            help = "custom names.")]
-//!     pub renamed: String,
-//!     // Inverse arguments
-//!     #[conf(short = "n", long = "no_pancakes", help = "disable pancakes.")]
-//!     pub pancakes: bool,
-//!     // Custom default values
-//!     #[conf(default = "123.45")]
-//!     pub floating: f64,
+//! struct ServerConfig {
+//!     #[conf(help = "The public key")]
+//!     pub public_key: String,
+//!     #[conf(no_file, long = "your-secret", help = "Your secret API key")]
+//!     pub secret_key: String,
+//!     #[conf(default = "100", help = "timeout in seconds")]
+//!     pub timeout: i32,
 //! }
 //!
 //! pub fn main() {
 //!     let app = App::new("demo");
-//!     let conf = Config::parse(app, "config.ini");
+//!     let conf = ServerConfig::parse(app, "config.ini");
 //!     println!("Parsed config: {:#?}", conf);
 //! }
 //! ```
@@ -67,8 +55,7 @@
 //! character). Otherwise, it will be obtained directly from the field's
 //! name. `do_something` will be `-d`.
 //! * `no_short`: don't include the option as a short argument.
-//! * `negated_arg`: the flag's value is the opposite. When the argument is
-//! specified, it will take `false` as its value:
+//! * `negated_arg`: the flag's value is the opposite:
 //!
 //! ```rust
 //! use structconf::StructConf;
@@ -76,7 +63,7 @@
 //! #[derive(StructConf)]
 //! struct Bakery {
 //!     // By default it's `true`, unless `--no-pancakes` is passed.
-//!     #[conf(negated_arg, no_short, long = "--no-pancakes")]
+//!     #[conf(negated_arg, no_short, long = "no-pancakes")]
 //!     pancakes: bool
 //! }
 //! ```
@@ -85,9 +72,9 @@
 //! available in the argument parser at all.
 //!
 //! ## Config file attributes
-//! * `file = "..."`: a custom option name for the config file. Otherwise, it
-//! will be the same as the field's name.
-//! * `no_file`: son't include the option in the config file.
+//! * `file = "..."`: a custom name for the config file. Otherwise, it will
+//! be the same as the field's name.
+//! * `no_file`: won't include the option in the config file.
 //! * `section`: the section in the config file where the option will be.
 //! Otherwise, `Default` is used. For example,
 //! `#[structconf(section = "Planes")] model_id: i32` will look like this in

@@ -8,41 +8,39 @@
 
 ---
 
-StructConf is a small derive macro that allows you to combine argument parsing from [clap](https://github.com/clap-rs/clap) and config file parsing from [rust-ini](https://github.com/zonyitoo/rust-ini) at compile time. It's inspired by the argument parser [structopt](https://github.com/TeXitoi/structopt), and developed to be used in [Vidify](https://github.com/vidify). Example:
+StructConf is a small derive macro that allows you to combine argument parsing from [clap](https://github.com/clap-rs/clap) and config file parsing from [rust-ini](https://github.com/zonyitoo/rust-ini) at compile time. It's inspired by the argument parser [structopt](https://github.com/TeXitoi/structopt), and developed to be used in [Vidify](https://github.com/vidify).
+
+StructConf aims to be relatively small and simple. Here are its current selling points:
+
+* Options available in the config file, argument parser, both, or none.
+* Configurable option names.
+* Custom types supported.
+* Optional fields with `Option`.
+* Custom default expressions.
+* Insightful error messages.
+* Thoroughly tested.
+
+Small example:
 
 ```rust
 use clap::App;
 use structconf::StructConf;
 
 #[derive(Debug, StructConf)]
-struct Config {
-    // Option available in the config file and the arguments
-    #[conf(help = "description for the argument parser.")]
-    pub default: i32,
-    // Specify where the options are available.
-    #[conf(no_file)]
-    pub args_opt: u8,
-    #[conf(no_short, no_long)]
-    pub conf_opt: Option<String>,
-    #[conf(no_short, no_long, no_file)]
-    pub ignored: bool,
-    // Customize the names
-    #[conf(short = "x", long = "renamed-opt", file = "my_opt",
-           help = "custom names.")]
-    pub renamed: String,
-    // Inverse arguments
-    #[conf(short = "n", long = "no_pancakes", help = "disable pancakes.")]
-    pub pancakes: bool,
-    // Custom default values
-    #[conf(default = "123.45")]
-    pub floating: f64,
+struct ServerConfig {
+    #[conf(help = "The public key")]
+    pub public_key: String,
+    #[conf(no_file, long = "your-secret", help = "Your secret API key")]
+    pub secret_key: String,
+    #[conf(default = "100", help = "timeout in seconds")]
+    pub timeout: i32,
 }
 
 pub fn main() {
     let app = App::new("demo");
-    let conf = Config::parse(app, "config.ini");
+    let conf = ServerConfig::parse(app, "config.ini");
     println!("Parsed config: {:#?}", conf);
 }
 ```
 
-Read [the docs]() for more details on how to use StructConf.
+For more detauils on how to use Structconf, read [the docs](https://docs.rs/structconf/) and check out the [examples](examples).
