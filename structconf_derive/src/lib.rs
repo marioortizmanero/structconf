@@ -201,7 +201,7 @@ fn check_conflicts(opts: &Vec<Opt>) -> Result<()> {
                     try_insert!(shorts, short.clone(), span, "short");
                 }
                 if let Some(long) = &arg.long {
-                    try_insert!(longs, long.clone(), span, "short");
+                    try_insert!(longs, long.clone(), span, "long");
                 }
             }
             OptKind::File(file) => {
