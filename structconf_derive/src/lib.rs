@@ -143,7 +143,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
 }
 
 // Looks for conflicts in the options as a whole, like repeated IDs.
-fn check_conflicts(opts: &Vec<&dyn Opt>) -> Result<()> {
+fn check_conflicts(opts: &Vec<Opt>) -> Result<()> {
     let mut files = HashSet::new();
     let mut longs = HashSet::new();
     let mut shorts = HashSet::new();
@@ -160,28 +160,28 @@ fn check_conflicts(opts: &Vec<&dyn Opt>) -> Result<()> {
     }
 
     for opt in opts {
-        let span = opt.base().name.span();
         match opt {
-            OptArg => {
+            Opt::Arg { base, arg } => {
+                if let Some(short) = &arg.short {
+                    try_insert!(shorts, short.clone(), base.name.span(), "short");
+                }
+                if let Some(long) = &arg.long {
+                    try_insert!(longs, long.clone(), base.name.span(), "short");
+                }
             },
-            OptFile => {
-                try_insert!(files, file.name.clone(), span, "file");
+            Opt::File { base, file } => {
+                try_insert!(files, file.name.clone(), base.name.span(), "file");
             },
-            OptBoth => {
-
-            }
-        }
-        if let Some(file) = opt.file.as_ref() {
-            try_insert!(files, file.name.clone(), span, "file");
-        }
-
-        if let Some(arg) = opt.arg.as_ref() {
-            if let Some(val) = arg.long.as_ref() {
-                try_insert!(longs, val.clone(), span, "long");
-            }
-            if let Some(val) = arg.short.as_ref() {
-                try_insert!(shorts, val.clone(), span, "short");
-            }
+            Opt::Both { base, arg, file }=> {
+                if let Some(short) = &arg.short {
+                    try_insert!(shorts, short.clone(), base.name.span(), "short");
+                }
+                if let Some(long) = &arg.long {
+                    try_insert!(longs, long.clone(), base.name.span(), "short");
+                }
+                try_insert!(files, file.name.clone(), base.name.span(), "file");
+            },
+            _ => {}
         }
     }
 

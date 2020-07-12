@@ -34,93 +34,56 @@ pub trait OptData {
 
 
 // IMPLEMENTATION OF THE OPT TYPES
-pub struct OptNone {
-    pub base: OptBaseData,
+pub enum Opt {
+    Empty {
+        base: OptBaseData
+    },
+    Arg {
+        base: OptBaseData,
+        arg: OptArgData
+    },
+    File {
+        base: OptBaseData,
+        file: OptFileData
+    },
+    Both {
+        base: OptBaseData,
+        arg: OptArgData,
+        file: OptFileData,
+    },
 }
 
-pub struct OptArg {
-    pub base: OptBaseData,
-    pub arg: OptArgData,
-}
+impl Opt {
+    pub fn into_field_init(&self) -> Result<TokenStream2> {
+        match self {
+            Opt::Empty { base } => { },
+            Opt::Arg { base, arg } => { },
+            Opt::File { base, file } => { },
+            Opt::Both { base, arg, file } => { },
+        }
 
-pub struct OptFile {
-    pub base: OptBaseData,
-    pub file: OptFileData,
-}
-
-pub struct OptBoth {
-    pub base: OptBaseData,
-    pub arg: OptArgData,
-    pub file: OptFileData,
-}
-
-pub trait Opt {
-    fn base(&self) -> OptBaseData;
-    fn into_field_init(&self) -> Result<TokenStream2>;
-    fn into_arg_init(&self) -> Option<TokenStream2>;
-    fn into_to_file(&self) -> Option<TokenStream2>;
-}
-
-impl Opt for OptNone {
-    fn base(&self) -> OptBaseData { self.base }
-
-    fn into_field_init(&self) -> Result<TokenStream2> {
         Ok(TokenStream2::new())
     }
 
-    fn into_arg_init(&self) -> Option<TokenStream2> {
-        None
+    pub fn into_arg_init(&self) -> Option<TokenStream2> {
+        match self {
+            Opt::Empty { base } => { },
+            Opt::Arg { base, arg } => { },
+            Opt::File { base, file } => { },
+            Opt::Both { base, arg, file } => { },
+        }
+
+        Some(TokenStream2::new())
     }
 
-    fn into_to_file(&self) -> Option<TokenStream2> {
-        None
-    }
-}
+    pub fn into_to_file(&self) -> Option<TokenStream2> {
+        match self {
+            Opt::Empty { base } => { },
+            Opt::Arg { base, arg } => { },
+            Opt::File { base, file } => { },
+            Opt::Both { base, arg, file } => { },
+        }
 
-impl Opt for OptArg {
-    fn base(&self) -> OptBaseData { self.base }
-
-    fn into_field_init(&self) -> Result<TokenStream2> {
-        Ok(TokenStream2::new())
-    }
-
-    fn into_arg_init(&self) -> Option<TokenStream2> {
-        None
-    }
-
-    fn into_to_file(&self) -> Option<TokenStream2> {
-        None
-    }
-}
-
-impl Opt for OptFile {
-    fn base(&self) -> OptBaseData { self.base }
-
-    fn into_field_init(&self) -> Result<TokenStream2> {
-        Ok(TokenStream2::new())
-    }
-
-    fn into_arg_init(&self) -> Option<TokenStream2> {
-        None
-    }
-
-    fn into_to_file(&self) -> Option<TokenStream2> {
-        None
-    }
-}
-
-impl Opt for OptBoth {
-    fn base(&self) -> OptBaseData { self.base }
-
-    fn into_field_init(&self) -> Result<TokenStream2> {
-        Ok(TokenStream2::new())
-    }
-
-    fn into_arg_init(&self) -> Option<TokenStream2> {
-        None
-    }
-
-    fn into_to_file(&self) -> Option<TokenStream2> {
-        None
+        Some(TokenStream2::new())
     }
 }

@@ -249,7 +249,8 @@ impl BasicOptAttrs {
         }
     }
 
-    pub fn parse_opt(&self) -> Result<&dyn Opt> {
+    // TODO mix up with parse_arg and parse_file to avoid unwrap()
+    pub fn parse_opt(&self) -> Result<Opt> {
         let base = OptBaseData {
             takes_value: self.takes_value(),
             is_option: self.is_option,
@@ -261,21 +262,21 @@ impl BasicOptAttrs {
         let file = self.parse_file();
 
         if arg.is_none() && file.is_none() {
-            Ok(&OptNone {
+            Ok(Opt::Empty {
                 base
             })
         } else if arg.is_some() && file.is_none() {
-            Ok(&OptArg {
+            Ok(Opt::Arg {
                 base,
                 arg: arg.unwrap(),
             })
         } else if arg.is_none() && file.is_some() {
-            Ok(&OptFile {
+            Ok(Opt::File {
                 base,
                 file: file.unwrap(),
             })
         } else {
-            Ok(&OptBoth {
+            Ok(Opt::Both {
                 base,
                 arg: arg.unwrap(),
                 file: file.unwrap()
