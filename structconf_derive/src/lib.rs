@@ -9,8 +9,8 @@ mod error;
 mod opt;
 
 use crate::error::{Error, ErrorKind, Result};
-use crate::opt::*;
-use crate::attrs::*;
+use crate::opt::{OptKind, Opt};
+use crate::attrs::Attrs;
 
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
@@ -56,7 +56,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
     // into the corresponding `TokenStream`s.
     let mut options = Vec::new();
     for field in fields.named.into_iter() {
-        let attr = BasicOptAttrs::init(field)?;
+        let attr = Attrs::init(field)?;
         let (opt1, opt2) = attr.parse_opt()?;
         options.push(opt1);
         if let Some(opt) = opt2 {

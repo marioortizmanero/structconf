@@ -1,5 +1,5 @@
 use crate::error::Result;
-use crate::attrs::BasicOptAttrs;
+use crate::attrs::Attrs;
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
@@ -25,12 +25,6 @@ pub struct OptArgData {
 pub struct OptFileData {
     pub name: String,
     pub section: String,
-}
-
-pub trait OptData {
-    fn parse(attrs: BasicOptAttrs) -> Result<Self>
-        where
-            Self: Sized;
 }
 
 
