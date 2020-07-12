@@ -4,9 +4,9 @@ use structconf::StructConf;
 
 #[derive(StructConf)]
 struct Config {
-    #[conf(long = "abc")]
+    #[conf(no_file, no_short, long = "abc")]
     pub name1: bool,
-    #[conf(long = "abc")]
+    #[conf(no_file, no_short, long = "abc")]
     pub name2: bool,
 }
 

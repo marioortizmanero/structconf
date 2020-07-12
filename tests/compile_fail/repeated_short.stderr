@@ -1,5 +1,5 @@
-error: The `short` attribute with value `n` is repeated with another field. Try using the `no_short` and `short` attributes.
- --> $DIR/repeated_short.rs:9:9
-  |
-9 |     pub name2: bool,
-  |         ^^^^^
+error: The `short` attribute with value `n` is repeated with another field.
+  --> $DIR/repeated_short.rs:11:9
+   |
+11 |     pub name2: bool,
+   |         ^^^^^

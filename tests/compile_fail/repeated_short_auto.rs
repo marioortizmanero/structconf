@@ -4,10 +4,10 @@ use structconf::StructConf;
 
 #[derive(StructConf)]
 struct Config {
-    #[conf(short = "x")]
-    pub a: bool,
-    #[conf(short = "x")]
-    pub b: bool,
+    #[conf(no_file, no_long, short = "x")]
+    pub name1: bool,
+    #[conf(no_file, no_long, short = "x")]
+    pub name2: bool,
 }
 
 fn main() {}

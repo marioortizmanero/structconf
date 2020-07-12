@@ -169,7 +169,7 @@ impl BasicOptAttrs {
                 name: self
                     .file
                     .clone()
-                    .unwrap_or(self.ident.clone().unwrap().to_string()),
+                    .unwrap_or(self.ident.as_ref().unwrap().to_string()),
                 section: self
                     .section
                     .clone()

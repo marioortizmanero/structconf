@@ -36,7 +36,7 @@ impl fmt::Display for Error {
             ConflictIDs(attr, val) => write!(
                 f,
                 "The `{}` attribute with value `{}` is repeated with another \
-                field. Try using the `no_short` and `short` attributes.",
+                field.",
                 attr, val
             ),
             Value(opt, val) => {

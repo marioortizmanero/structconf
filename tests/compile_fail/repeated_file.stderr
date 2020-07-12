@@ -1,4 +1,4 @@
-error: The `short` attribute with value `n` is repeated with another field. Try using the `no_short` and `short` attributes.
+error: The `file` attribute with value `abc` is repeated with another field.
   --> $DIR/repeated_file.rs:10:9
    |
 10 |     pub name2: bool,

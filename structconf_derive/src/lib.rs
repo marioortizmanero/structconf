@@ -141,7 +141,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
 
 // Looks for conflicts in the options as a whole, like repeated IDs.
 fn check_conflicts(opts: &Vec<Opt>) -> Result<()> {
-    let mut names = HashSet::new();
+    let mut files = HashSet::new();
     let mut longs = HashSet::new();
     let mut shorts = HashSet::new();
 
@@ -158,7 +158,9 @@ fn check_conflicts(opts: &Vec<Opt>) -> Result<()> {
 
     for opt in opts {
         let span = opt.name.span();
-        try_insert!(names, opt.name.to_string(), span, "file");
+        if let Some(file) = opt.file.as_ref() {
+            try_insert!(files, file.name.clone(), span, "file");
+        }
 
         if let Some(arg) = opt.arg.as_ref() {
             if let Some(val) = arg.long.as_ref() {
