@@ -4,6 +4,7 @@
 extern crate darling;
 extern crate proc_macro;
 
+mod attrs;
 mod error;
 mod opt;
 
