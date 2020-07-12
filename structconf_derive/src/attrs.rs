@@ -46,8 +46,8 @@ impl Attrs {
     /// shouldn't be used by itself.
     pub fn init(field: Field) -> Result<Attrs> {
         let mut attrs = Attrs::from_field(&field)?;
-        attrs.check_conflicts()?;
         attrs.parse_type();
+        attrs.check_conflicts()?;
 
         Ok(attrs)
     }
@@ -92,6 +92,14 @@ impl Attrs {
         );
 
         check_conflicts!(
+            (self.no_short && self.no_long, "no_short and no_long"),
+            [
+                (self.inverse_arg, "inverse_arg"),
+                (self.help.is_some(), "help"),
+            ]
+        );
+
+        check_conflicts!(
             (self.no_short, "no_short"),
             [(self.short.is_some(), "short"),]
         );
@@ -102,11 +110,8 @@ impl Attrs {
         );
 
         check_conflicts!(
-            (self.no_short && self.no_long, "no_short and no_long"),
-            [
-                (self.inverse_arg, "inverse_arg"),
-                (self.help.is_some(), "help"),
-            ]
+            (self.takes_value, "field's type"),
+            [(self.inverse_arg, "inverse_arg"),]
         );
 
         check_conflicts!(

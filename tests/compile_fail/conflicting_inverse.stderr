@@ -1,4 +1,4 @@
-error: `no_short and no_long` and `inverse_arg` are conflicting attributes, they cannot go together in the same field.
+error: `no_short and no_long` is incompatible with `inverse_arg`.
  --> $DIR/conflicting_inverse.rs:9:9
   |
 9 |     pub value: bool,

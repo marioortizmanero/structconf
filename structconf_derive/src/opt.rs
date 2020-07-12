@@ -134,65 +134,66 @@ impl Opt {
     /// Generates the argument initialization logic for `clap`. This will
     /// only work for options that represent an argument.
     pub fn gen_arg_init(&self) -> Option<TokenStream2> {
-        if let OptKind::Arg(OptArgData {
-            help, long, short, ..
-        }) = &self.kind
-        {
-            let id = self.base.id.to_string();
-            let mut init = quote! {
-                ::clap::Arg::with_name(#id)
-            };
+        match &self.kind {
+            OptKind::Arg(OptArgData { help, long, short, ..  }) 
+                | OptKind::Flag(OptArgData { help, long, short, ..  }) =>
+            {
+                let id = self.base.id.to_string();
+                let mut init = quote! {
+                    ::clap::Arg::with_name(#id)
+                };
 
-            if let Some(help) = help {
-                init.extend(quote! {
-                    .help(#help)
-                });
-            }
+                if let Some(help) = help {
+                    init.extend(quote! {
+                        .help(#help)
+                    });
+                }
 
-            if let Some(long) = long {
-                init.extend(quote! {
-                    .long(#long)
-                });
-            }
+                if let Some(long) = long {
+                    init.extend(quote! {
+                        .long(#long)
+                    });
+                }
 
-            if let Some(short) = short {
-                init.extend(quote! {
-                    .short(#short)
-                });
-            }
+                if let Some(short) = short {
+                    init.extend(quote! {
+                        .short(#short)
+                    });
+                }
 
-            if let OptKind::Arg(_) = self.kind {
-                init.extend(quote! {
-                    .takes_value(true)
-                });
-            }
+                if let OptKind::Arg(_) = self.kind {
+                    init.extend(quote! {
+                        .takes_value(true)
+                    });
+                }
 
-            Some(init)
-        } else {
-            None
+                Some(init)
+            },
+            _ => None
         }
     }
 
     /// Generates the logic to write to a config file with `rust-ini`. This
     /// will only work for options available in the config file.
     pub fn gen_write_file(&self) -> Option<TokenStream2> {
-        if let OptKind::File(OptFileData { name, section }) = &self.kind {
-            let id = &self.base.id;
-            if self.base.is_option {
-                Some(quote! {
-                    if let Some(val) = &self.#id {
+        match &self.kind {
+            OptKind::File(OptFileData { name, section }) => {
+                let id = &self.base.id;
+                if self.base.is_option {
+                    Some(quote! {
+                        if let Some(val) = &self.#id {
+                            conf.with_section(Some(#section))
+                                .set(#name, val.to_string());
+                        }
+                    })
+                } else {
+                    Some(quote! {
                         conf.with_section(Some(#section))
-                            .set(#name, val.to_string());
-                    }
-                })
-            } else {
-                Some(quote! {
-                    conf.with_section(Some(#section))
-                        .set(#name, self.#id.to_string());
-                })
-            }
-        } else {
-            None
+                            .set(#name, self.#id.to_string());
+                    })
+                }
+            },
+            _ => None,
         }
     }
 }

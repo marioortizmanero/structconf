@@ -1,4 +1,4 @@
-error: `no_file` and `file` are conflicting attributes, they cannot go together in the same field.
+error: `no_file` is incompatible with `file`.
  --> $DIR/conflicting_file.rs:8:9
   |
 8 |     pub value: bool,

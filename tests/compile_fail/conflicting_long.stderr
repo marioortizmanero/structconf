@@ -1,4 +1,4 @@
-error: `no_long` and `long` are conflicting attributes, they cannot go together in the same field.
+error: `no_long` is incompatible with `long`.
  --> $DIR/conflicting_long.rs:8:9
   |
 8 |     pub value: bool,

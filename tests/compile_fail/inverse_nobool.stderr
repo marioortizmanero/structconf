@@ -1,7 +1,5 @@
-error[E0600]: cannot apply unary operator `!` to type `f64`
- --> $DIR/inverse_nobool.rs:6:10
+error: `field's type` is incompatible with `inverse_arg`.
+ --> $DIR/inverse_nobool.rs:9:9
   |
-6 | #[derive(StructConf)]
-  |          ^^^^^^^^^^ cannot apply unary operator `!`
-  |
-  = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+9 |     pub value: f64,
+  |         ^^^^^
