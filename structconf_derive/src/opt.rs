@@ -1,9 +1,9 @@
 use crate::error::{Error, ErrorKind, Result};
 
 use darling::FromField;
-use quote::quote;
 use proc_macro2::TokenStream as TokenStream2;
-use syn::{spanned::Spanned, Field, Ident, Type, Expr};
+use quote::quote;
+use syn::{spanned::Spanned, Expr, Field, Ident, Type};
 
 /// The basic structure for the field's data, containing all the available
 /// attributes in `#[conf(...)]` and some additional data. This is first
@@ -313,7 +313,13 @@ impl Opt {
     /// Methods like `unwrap_or` can't be used here because this has to be
     /// able to propagate errors with `?`.
     pub fn into_field_init(&self) -> Result<TokenStream2> {
-        let Opt { name, ty, is_option, arg, ..  } = self;
+        let Opt {
+            name,
+            ty,
+            is_option,
+            arg,
+            ..
+        } = self;
 
         // Obtains a TokenStream with what the default value of the option
         // is going to be. If `default` was used, the expression is used.

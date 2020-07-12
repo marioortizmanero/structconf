@@ -3,14 +3,14 @@
 //! `target/tests/structconf` directory. These files should have different
 //! names to avoid conflicts.
 
+use std::convert::AsRef;
 use std::default::Default;
 use std::fmt;
 use std::fs::{self, File};
-use std::path::Path;
 use std::io::Write;
-use structconf::{StructConf, Error};
+use std::path::Path;
 use std::str::FromStr;
-use std::convert::AsRef;
+use structconf::{Error, StructConf};
 use strum_macros::{Display, EnumString};
 
 /// `TempFile` is a very simple wrapper for automatically cleaning up files
@@ -145,14 +145,15 @@ fn read_file() {
     // `no_short_no_long` and others are not included; they should be false.
     // `new_file` and `new_combined` have been renamed from `file` and
     // `combined`, respectively.
-    f.write(b"
-    [Defaults]
-    no_file = 1234
-    no_short = \"true\"
-    no_long = true
-    new_file = true
-    new_combined = true
-    ").unwrap();
+    f.write(
+        b"[Defaults]
+no_file = 1234
+no_short = \"true\"
+no_long = true
+new_file = true
+new_combined = true",
+    )
+    .unwrap();
 
     let app = clap::App::new("test");
     let conf = Config::parse(app, &file).unwrap();
@@ -203,15 +204,17 @@ fn errors() {
 
     // Checking errors when parsing the config file
     let mut f = File::create(&file).unwrap();
-    f.write(b"
-    [Defaults]
-    no_short = \"should be a boolean\"
-    ").unwrap();
+    f.write(
+        b"
+[Defaults]
+no_short = \"should be a boolean\"",
+    )
+    .unwrap();
 
     let app = clap::App::new("test");
     match Config::parse(app, &file) {
         Err(Error::Parse(_)) => assert!(true),
-        s => assert!(false, "parse error not returned: {:?}", s)
+        s => assert!(false, "parse error not returned: {:?}", s),
     }
 
     // Checking errors when creating the config file. The root directory
@@ -220,7 +223,7 @@ fn errors() {
     let app = clap::App::new("test");
     match Config::parse(app, "/") {
         Err(Error::IO(_)) => assert!(true),
-        _ => assert!(false, "IO error not returned")
+        _ => assert!(false, "IO error not returned"),
     }
 }
 
@@ -231,31 +234,36 @@ fn custom_types() {
 
     // Making sure the default values work.
     let mut f = File::create(&file).unwrap();
-    f.write(b"
-    [Defaults]
-    ").unwrap();
+    f.write(b"[Defaults]").unwrap();
 
     let app = clap::App::new("test");
     let conf = Config::parse(app, &file).unwrap();
     assert_eq!(conf.someenum, MyEnum::One);
-    assert_eq!(conf.astruct, MyStruct {
-        data: 0,
-        moredata: String::from("(nothing)")
-    });
+    assert_eq!(
+        conf.astruct,
+        MyStruct {
+            data: 0,
+            moredata: String::from("(nothing)")
+        }
+    );
 
     // With actual values
-    f.write(b"
-    someenum = Two
-    astruct = 123;strval
-    ").unwrap();
+    f.write(
+        b"someenum = Two
+    astruct = 123;strval",
+    )
+    .unwrap();
 
     let app = clap::App::new("test");
     let conf = Config::parse(app, &file).unwrap();
     assert_eq!(conf.someenum, MyEnum::Two);
-    assert_eq!(conf.astruct, MyStruct {
-        data: 123,
-        moredata: String::from("strval"),
-    });
+    assert_eq!(
+        conf.astruct,
+        MyStruct {
+            data: 123,
+            moredata: String::from("strval"),
+        }
+    );
 }
 
 #[test]
@@ -270,10 +278,11 @@ fn empty_field() {
     let file = TempFile::new("empty_field.ini");
 
     let mut f = File::create(&file).unwrap();
-    f.write(b"
-    [Defaults]
-    empty = 1234
-    ").unwrap();
+    f.write(
+        b"[Defaults]
+empty = 1234",
+    )
+    .unwrap();
 
     let app = clap::App::new("test");
     let args = Config::parse_args(app);
@@ -297,19 +306,23 @@ fn optionals() {
 
     // Some values are writte into the config file and it's parsed again.
     let mut f = File::create(&file).unwrap();
-    f.write(b"
-    [Defaults]
-    option_i32 = 1234
-    option_enum = Three
-    option_string = some text goes here
-    ").unwrap();
+    f.write(
+        b"[Defaults]
+option_i32 = 1234
+option_enum = Three
+option_string = some text goes here",
+    )
+    .unwrap();
 
     // The new values should appear under `Some`.
     let app = clap::App::new("test");
     let conf = Config::parse(app, &file).unwrap();
     assert_eq!(conf.option_i32, Some(1234));
     assert_eq!(conf.option_enum, Some(MyEnum::Three));
-    assert_eq!(conf.option_string, Some(String::from("some text goes here")));
+    assert_eq!(
+        conf.option_string,
+        Some(String::from("some text goes here"))
+    );
 
     // Writing some optional values. Only those that aren't `None` should
     // be written into it.

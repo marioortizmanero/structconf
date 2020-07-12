@@ -101,9 +101,9 @@
 
 pub use structconf_derive::StructConf;
 
+use std::ffi::OsString;
 use std::fmt;
 use std::io;
-use std::ffi::OsString;
 
 /// Small wrapper for the possible errors that may occur when parsing a
 /// StructConf-derived struct.
@@ -169,9 +169,9 @@ pub trait StructConf {
         app: clap::App<'a, 'a>,
         iter: I,
     ) -> clap::ArgMatches<'a>
-        where
-            I: IntoIterator<Item = T>,
-            T: Into<OsString> + Clone;
+    where
+        I: IntoIterator<Item = T>,
+        T: Into<OsString> + Clone;
 
     /// The config file is read after parsing the arguments, and the struct
     /// is initialized with the default values taken into account.
