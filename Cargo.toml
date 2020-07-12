@@ -1,6 +1,6 @@
 [package]
 name = "structconf"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Mario Ortiz Manero <marioortizmanero@gmail.com>"]
 edition = "2018"
 
@@ -16,7 +16,7 @@ readme = "README.md"
 [dependencies]
 clap = "2.33.1"
 rust-ini = "0.15.3"
-structconf_derive = { version = "0.2.0", path = "structconf_derive" }
+structconf_derive = { version = "0.3.0", path = "structconf_derive" }
 
 [dev-dependencies]
 trybuild = { version = "1.0", features = ["diff"] }
