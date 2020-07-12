@@ -57,7 +57,11 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
     let mut options = Vec::new();
     for field in fields.named.into_iter() {
         let attr = BasicOptAttrs::init(field)?;
-        options.push(attr.parse_opt()?)
+        let (opt1, opt2) = attr.parse_opt()?;
+        options.push(opt1);
+        if let Some(opt) = opt2 {
+            options.push(opt);
+        }
     }
     check_conflicts(&options)?;
 
@@ -160,28 +164,20 @@ fn check_conflicts(opts: &Vec<Opt>) -> Result<()> {
     }
 
     for opt in opts {
-        match opt {
-            Opt::Arg { base, arg } => {
+        let span = opt.base.name.span();
+        match &opt.kind {
+            OptKind::Empty => {},
+            OptKind::Arg(arg) => {
                 if let Some(short) = &arg.short {
-                    try_insert!(shorts, short.clone(), base.name.span(), "short");
+                    try_insert!(shorts, short.clone(), span, "short");
                 }
                 if let Some(long) = &arg.long {
-                    try_insert!(longs, long.clone(), base.name.span(), "short");
+                    try_insert!(longs, long.clone(), span, "short");
                 }
             },
-            Opt::File { base, file } => {
-                try_insert!(files, file.name.clone(), base.name.span(), "file");
+            OptKind::File(file) => {
+                try_insert!(files, file.name.clone(), span, "file");
             },
-            Opt::Both { base, arg, file }=> {
-                if let Some(short) = &arg.short {
-                    try_insert!(shorts, short.clone(), base.name.span(), "short");
-                }
-                if let Some(long) = &arg.long {
-                    try_insert!(longs, long.clone(), base.name.span(), "short");
-                }
-                try_insert!(files, file.name.clone(), base.name.span(), "file");
-            },
-            _ => {}
         }
     }
 

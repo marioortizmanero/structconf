@@ -3,6 +3,7 @@ use crate::attrs::BasicOptAttrs;
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
+use std::rc::Rc;
 use syn::{Expr, Field, Ident, Type};
 
 // DATA STRUCTURES
@@ -34,54 +35,43 @@ pub trait OptData {
 
 
 // IMPLEMENTATION OF THE OPT TYPES
-pub enum Opt {
-    Empty {
-        base: OptBaseData
-    },
-    Arg {
-        base: OptBaseData,
-        arg: OptArgData
-    },
-    File {
-        base: OptBaseData,
-        file: OptFileData
-    },
-    Both {
-        base: OptBaseData,
-        arg: OptArgData,
-        file: OptFileData,
-    },
+pub enum OptKind {
+    Empty,
+    Arg(OptArgData),
+    File(OptFileData),
+}
+
+pub struct Opt {
+    pub base: Rc<OptBaseData>,
+    pub kind: OptKind
 }
 
 impl Opt {
     pub fn into_field_init(&self) -> Result<TokenStream2> {
-        match self {
-            Opt::Empty { base } => { },
-            Opt::Arg { base, arg } => { },
-            Opt::File { base, file } => { },
-            Opt::Both { base, arg, file } => { },
+        match &self.kind {
+            OptKind::Empty => { },
+            OptKind::Arg(arg) => { },
+            OptKind::File(file) => { },
         }
 
         Ok(TokenStream2::new())
     }
 
     pub fn into_arg_init(&self) -> Option<TokenStream2> {
-        match self {
-            Opt::Empty { base } => { },
-            Opt::Arg { base, arg } => { },
-            Opt::File { base, file } => { },
-            Opt::Both { base, arg, file } => { },
+        match &self.kind {
+            OptKind::Empty => { },
+            OptKind::Arg(arg) => { },
+            OptKind::File(file) => { },
         }
 
         Some(TokenStream2::new())
     }
 
     pub fn into_to_file(&self) -> Option<TokenStream2> {
-        match self {
-            Opt::Empty { base } => { },
-            Opt::Arg { base, arg } => { },
-            Opt::File { base, file } => { },
-            Opt::Both { base, arg, file } => { },
+        match &self.kind {
+            OptKind::Empty => { },
+            OptKind::Arg(arg) => { },
+            OptKind::File(file) => { },
         }
 
         Some(TokenStream2::new())

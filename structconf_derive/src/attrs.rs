@@ -7,10 +7,11 @@ use crate::error::{Error, ErrorKind, Result};
 use crate::opt::*;
 
 use darling::FromField;
+use std::rc::Rc;
 use syn::{spanned::Spanned, Field, Ident, Type, Path, TypePath};
 
 // TODO rename to attrs
-#[derive(FromField)]
+#[derive(Clone, FromField)]
 #[darling(attributes(conf))]
 pub struct BasicOptAttrs {
     pub ident: Option<Ident>,
@@ -249,38 +250,47 @@ impl BasicOptAttrs {
         }
     }
 
-    // TODO mix up with parse_arg and parse_file to avoid unwrap()
-    pub fn parse_opt(&self) -> Result<Opt> {
-        let base = OptBaseData {
+    /// Parses the attributes into an option, which may be empty, an argument,
+    /// a file, or both. Thus, two options are returned in case it's both.
+    ///
+    /// TODO: reformat to remove unwrap and clone
+    pub fn parse_opt(self) -> Result<(Opt, Option<Opt>)> {
+        let arg = self.clone().parse_arg()?;
+        let file = self.clone().parse_file();
+        let base = Rc::new(OptBaseData {
             takes_value: self.takes_value(),
             is_option: self.is_option,
             default: self.default,
             name: self.ident.unwrap(),
             ty: self.ty,
-        };
-        let arg = self.parse_arg()?;
-        let file = self.parse_file();
+        });
 
         if arg.is_none() && file.is_none() {
-            Ok(Opt::Empty {
-                base
-            })
+            Ok((Opt {
+                base,
+                kind: OptKind::Empty,
+            },
+            None))
         } else if arg.is_some() && file.is_none() {
-            Ok(Opt::Arg {
+            Ok((Opt {
                 base,
-                arg: arg.unwrap(),
-            })
+                kind: OptKind::Arg(arg.unwrap()),
+            },
+            None))
         } else if arg.is_none() && file.is_some() {
-            Ok(Opt::File {
+            Ok((Opt {
                 base,
-                file: file.unwrap(),
-            })
+                kind: OptKind::File(file.unwrap()),
+            },
+            None))
         } else {
-            Ok(Opt::Both {
+            Ok((Opt {
+                base: Rc::clone(&base),
+                kind: OptKind::File(file.unwrap()),
+            }, Some(Opt {
                 base,
-                arg: arg.unwrap(),
-                file: file.unwrap()
-            })
+                kind: OptKind::Arg(arg.unwrap()),
+            })))
         }
     }
 }
