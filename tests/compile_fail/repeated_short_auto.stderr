@@ -1,4 +1,4 @@
-error: The `short` attribute with value `x` is repeated with another field.
+error: The `short` attribute with value `x` is repeated with another field. Try using the `no_short` and `short` attributes.
   --> $DIR/repeated_short_auto.rs:10:9
    |
 10 |     pub b: bool,

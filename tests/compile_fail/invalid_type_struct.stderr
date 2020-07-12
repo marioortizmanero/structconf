@@ -1,0 +1,5 @@
+error: Cannot #[derive(StructConf)] for the type `unnamed struct`, StructConf is only available for named structs.
+ --> $DIR/invalid_type_struct.rs:4:8
+  |
+4 | struct Enum(String, i32);
+  |        ^^^^

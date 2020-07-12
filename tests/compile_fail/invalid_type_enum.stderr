@@ -1,0 +1,5 @@
+error: expected `:`, found `,`
+ --> $DIR/invalid_type_enum.rs:5:6
+  |
+5 |     A,
+  |      ^ expected `:`

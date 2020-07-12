@@ -1,4 +1,4 @@
-error: The `long` attribute with value `abc` is repeated with another field.
+error: The `long` attribute with value `abc` is repeated with another field. Try using the `no_short` and `short` attributes.
   --> $DIR/repeated_long.rs:10:9
    |
 10 |     pub name2: bool,

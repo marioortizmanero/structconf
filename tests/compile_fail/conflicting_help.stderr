@@ -1,4 +1,4 @@
-error: `no_short and no_long` and `help` are conflicting attributes
+error: `no_short and no_long` and `help` are conflicting attributes, they cannot go together in the same field.
  --> $DIR/conflicting_help.rs:9:9
   |
 9 |     pub value: bool,
