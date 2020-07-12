@@ -26,7 +26,6 @@ pub struct OptFileData {
     pub section: String,
 }
 
-
 // IMPLEMENTATION OF THE OPT TYPES
 pub enum OptKind {
     Empty,
@@ -36,7 +35,7 @@ pub enum OptKind {
 
 pub struct Opt {
     pub base: Rc<OptBaseData>,
-    pub kind: OptKind
+    pub kind: OptKind,
 }
 
 impl Opt {
@@ -79,10 +78,12 @@ impl Opt {
                     Ok(quote! { #expr })
                 }
             }
-            None => if self.base.is_option {
-                Ok(quote! { None })
-            } else {
-                Ok(quote! { ::std::default::Default::default() })
+            None => {
+                if self.base.is_option {
+                    Ok(quote! { None })
+                } else {
+                    Ok(quote! { ::std::default::Default::default() })
+                }
             }
         }
     }
@@ -111,7 +112,7 @@ impl Opt {
                         #default
                     }
                 })
-            },
+            }
             OptKind::Arg(OptArgData { inverse, .. }) => {
                 if self.base.takes_value {
                     Ok(quote! {
@@ -133,21 +134,22 @@ impl Opt {
                         }
                     })
                 }
-            },
-            OptKind::File(OptFileData { name, section }) => {
-                Ok(quote! {
-                    if let Some(val) = file.get_from(Some(#section), #name) {
-                        #parse
-                        #ret
-                    }
-                })
-            },
+            }
+            OptKind::File(OptFileData { name, section }) => Ok(quote! {
+                if let Some(val) = file.get_from(Some(#section), #name) {
+                    #parse
+                    #ret
+                }
+            }),
         }
     }
 
     pub fn into_arg_init(&self) -> Option<TokenStream2> {
         let id = self.base.name.to_string();
-        if let OptKind::Arg(OptArgData { help, long, short, .. }) = &self.kind {
+        if let OptKind::Arg(OptArgData {
+            help, long, short, ..
+        }) = &self.kind
+        {
             let mut init = quote! {
                 ::clap::Arg::with_name(#id)
             };

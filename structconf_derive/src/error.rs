@@ -23,10 +23,12 @@ impl fmt::Display for Error {
         use ErrorKind::*;
 
         match &self.kind {
-            DeriveType(ty) => {
-                write!(f, "Cannot #[derive(StructConf)] for the type `{}`, \
-                StructConf is only available for named structs.", ty)
-            }
+            DeriveType(ty) => write!(
+                f,
+                "Cannot #[derive(StructConf)] for the type `{}`, \
+                StructConf is only available for named structs.",
+                ty
+            ),
             ConflictAttrs(opt1, opt2) => write!(
                 f,
                 "`{}` and `{}` are conflicting attributes, they cannot go \

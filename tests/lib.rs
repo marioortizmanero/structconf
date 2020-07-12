@@ -221,12 +221,14 @@ fn args() {
     let app = clap::App::new("test");
     let args = vec![
         "test", // Program name
-        "--no-file", "123", // Long for `no_file`
+        "--no-file",
+        "123", // Long for `no_file`
         "--no-short",
         "-x", // Renamed short for `no_long`
         "--file",
         "--new-long", // Renamed long for `long`
-        "--option-i32", "321", // Optional parameter
+        "--option-i32",
+        "321",        // Optional parameter
         "--no-value", // Long for `inverse`, should take the opposite value
     ];
     let args = Config::parse_args_from(app, args);

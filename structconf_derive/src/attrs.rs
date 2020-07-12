@@ -4,11 +4,11 @@
 //! structure defined later.
 
 use crate::error::{Error, ErrorKind, Result};
-use crate::opt::{OptKind, Opt, OptBaseData, OptFileData, OptArgData};
+use crate::opt::{Opt, OptArgData, OptBaseData, OptFileData, OptKind};
 
 use darling::FromField;
 use std::rc::Rc;
-use syn::{spanned::Spanned, Field, Ident, Type, Path, TypePath};
+use syn::{spanned::Spanned, Field, Ident, Path, Type, TypePath};
 
 #[derive(Clone, FromField)]
 #[darling(attributes(conf))]
@@ -165,8 +165,7 @@ impl Attrs {
             ..
         }) = &self.ty
         {
-            if segments.len() == 1
-                && segments.first().unwrap().ident == "bool"
+            if segments.len() == 1 && segments.first().unwrap().ident == "bool"
             {
                 return false;
             }
@@ -265,31 +264,40 @@ impl Attrs {
         });
 
         if arg.is_none() && file.is_none() {
-            Ok((Opt {
-                base,
-                kind: OptKind::Empty,
-            },
-            None))
+            Ok((
+                Opt {
+                    base,
+                    kind: OptKind::Empty,
+                },
+                None,
+            ))
         } else if arg.is_some() && file.is_none() {
-            Ok((Opt {
-                base,
-                kind: OptKind::Arg(arg.unwrap()),
-            },
-            None))
+            Ok((
+                Opt {
+                    base,
+                    kind: OptKind::Arg(arg.unwrap()),
+                },
+                None,
+            ))
         } else if arg.is_none() && file.is_some() {
-            Ok((Opt {
-                base,
-                kind: OptKind::File(file.unwrap()),
-            },
-            None))
+            Ok((
+                Opt {
+                    base,
+                    kind: OptKind::File(file.unwrap()),
+                },
+                None,
+            ))
         } else {
-            Ok((Opt {
-                base: Rc::clone(&base),
-                kind: OptKind::Arg(arg.unwrap()),
-            }, Some(Opt {
-                base,
-                kind: OptKind::File(file.unwrap()),
-            })))
+            Ok((
+                Opt {
+                    base: Rc::clone(&base),
+                    kind: OptKind::Arg(arg.unwrap()),
+                },
+                Some(Opt {
+                    base,
+                    kind: OptKind::File(file.unwrap()),
+                }),
+            ))
         }
     }
 }

@@ -8,9 +8,9 @@ mod attrs;
 mod error;
 mod opt;
 
-use crate::error::{Error, ErrorKind, Result};
-use crate::opt::{OptKind, Opt};
 use crate::attrs::Attrs;
+use crate::error::{Error, ErrorKind, Result};
+use crate::opt::{Opt, OptKind};
 
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
@@ -177,16 +177,16 @@ fn check_conflicts(opts: &Vec<Opt>) -> Result<()> {
             if !$iter.insert($new) {
                 return Err(Error {
                     kind: ErrorKind::ConflictIDs($err_id.to_string(), $new),
-                    span: $span
-                })
+                    span: $span,
+                });
             }
-        }
+        };
     }
 
     for opt in opts {
         let span = opt.base.name.span();
         match &opt.kind {
-            OptKind::Empty => {},
+            OptKind::Empty => {}
             OptKind::Arg(arg) => {
                 if let Some(short) = &arg.short {
                     try_insert!(shorts, short.clone(), span, "short");
@@ -194,10 +194,10 @@ fn check_conflicts(opts: &Vec<Opt>) -> Result<()> {
                 if let Some(long) = &arg.long {
                     try_insert!(longs, long.clone(), span, "short");
                 }
-            },
+            }
             OptKind::File(file) => {
                 try_insert!(files, file.name.clone(), span, "file");
-            },
+            }
         }
     }
 
