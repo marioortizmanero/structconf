@@ -24,7 +24,7 @@ pub struct OptArgData {
     pub long: Option<String>,
     pub short: Option<String>,
     pub help: Option<String>,
-    pub inverse: bool,
+    pub negated: bool,
 }
 
 pub struct OptFileData {
@@ -58,6 +58,7 @@ impl Opt {
         match &self.base.default {
             Some(expr) => {
                 let expr = syn::parse_str::<Expr>(&expr)?;
+
                 if self.base.is_option {
                     Ok(quote! { Some(#expr) })
                 } else {
@@ -65,7 +66,13 @@ impl Opt {
                 }
             }
             None => {
-                if self.base.is_option {
+                // Negated flags are always true by default. They also can't
+                // have a `default` field.
+                if let OptKind::Flag(OptArgData { negated: true, .. }) =
+                    self.kind
+                {
+                    Ok(quote! { true })
+                } else if self.base.is_option {
                     Ok(quote! { None })
                 } else {
                     Ok(quote! { ::std::default::Default::default() })
@@ -103,8 +110,8 @@ impl Opt {
                     }
                 })
             }
-            OptKind::Flag(OptArgData { inverse, .. }) => {
-                let ret = if *inverse {
+            OptKind::Flag(OptArgData { negated, .. }) => {
+                let ret = if *negated {
                     quote! { false }
                 } else {
                     quote! { true }
@@ -135,9 +142,12 @@ impl Opt {
     /// only work for options that represent an argument.
     pub fn gen_arg_init(&self) -> Option<TokenStream2> {
         match &self.kind {
-            OptKind::Arg(OptArgData { help, long, short, ..  }) 
-                | OptKind::Flag(OptArgData { help, long, short, ..  }) =>
-            {
+            OptKind::Arg(OptArgData {
+                help, long, short, ..
+            })
+            | OptKind::Flag(OptArgData {
+                help, long, short, ..
+            }) => {
                 let id = self.base.id.to_string();
                 let mut init = quote! {
                     ::clap::Arg::with_name(#id)
@@ -168,8 +178,8 @@ impl Opt {
                 }
 
                 Some(init)
-            },
-            _ => None
+            }
+            _ => None,
         }
     }
 
@@ -192,7 +202,7 @@ impl Opt {
                             .set(#name, self.#id.to_string());
                     })
                 }
-            },
+            }
             _ => None,
         }
     }

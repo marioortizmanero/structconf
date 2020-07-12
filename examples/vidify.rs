@@ -31,8 +31,7 @@ pub struct Config {
     #[conf(no_file, help = "The config file path")]
     conf_file: Option<String>,
     #[conf(
-        inverse_arg,
-        default = "true",
+        negated_arg,
         long = "no_lyrics",
         short = "n",
         help = "Do not print lyrics"

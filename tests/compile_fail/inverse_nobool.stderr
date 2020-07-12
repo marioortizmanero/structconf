@@ -1,4 +1,4 @@
-error: `field's type` is incompatible with `inverse_arg`.
+error: `negated_arg` is incompatible with `field's type`.
  --> $DIR/inverse_nobool.rs:9:9
   |
 9 |     pub value: f64,

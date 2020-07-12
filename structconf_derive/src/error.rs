@@ -30,11 +30,9 @@ impl fmt::Display for Error {
                 is only available for named structs.",
                 ty
             ),
-            ConflictAttrs(opt1, opt2) => write!(
-                f,
-                "`{}` is incompatible with `{}`.",
-                opt1, opt2
-            ),
+            ConflictAttrs(opt1, opt2) => {
+                write!(f, "`{}` is incompatible with `{}`.", opt1, opt2)
+            }
             ConflictIDs(attr, val) => write!(
                 f,
                 "The `{}` attribute with value `{}` is repeated with another \

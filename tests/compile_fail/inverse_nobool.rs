@@ -5,7 +5,7 @@ use structconf::StructConf;
 
 #[derive(StructConf)]
 struct Config {
-    #[conf(inverse_arg)]
+    #[conf(negated_arg)]
     pub value: f64,
 }
 

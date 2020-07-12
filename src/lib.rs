@@ -67,17 +67,16 @@
 //! character). Otherwise, it will be obtained directly from the field's
 //! name. `do_something` will be `-d`.
 //! * `no_short`: don't include the option as a short argument.
-//! * `inverse_arg`: the argument value is the opposite. The assigned type
-//! must implement [`std::ops::Not`](
-//! https://doc.rust-lang.org/std/ops/trait.Not.html). This is useful for
-//! arguments where the argument's value is negated:
+//! * `negated_arg`: the flag's value is the opposite. When the argument is
+//! specified, it will take `false` as its value:
 //!
 //! ```rust
 //! use structconf::StructConf;
 //!
 //! #[derive(StructConf)]
 //! struct Bakery {
-//!     #[conf(inverse_arg, no_short, long = "--no-pancakes")]
+//!     // By default it's `true`, unless `--no-pancakes` is passed.
+//!     #[conf(negated_arg, no_short, long = "--no-pancakes")]
 //!     pancakes: bool
 //! }
 //! ```

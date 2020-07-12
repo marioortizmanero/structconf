@@ -1,4 +1,4 @@
-error: `no_short and no_long` is incompatible with `inverse_arg`.
+error: `no_short and no_long` is incompatible with `negated_arg`.
  --> $DIR/conflicting_inverse.rs:9:9
   |
 9 |     pub value: bool,

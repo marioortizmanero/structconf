@@ -124,7 +124,7 @@ struct Config {
     combined: bool,
     #[conf(default = "123 + 123")]
     default: i64,
-    #[conf(no_short, inverse_arg, long = "no-value", default = "true")]
+    #[conf(no_short, negated_arg, long = "no-value")]
     inverse: bool,
     #[conf(no_short)]
     someenum: MyEnum,
@@ -337,9 +337,6 @@ option_string = some text goes here",
 fn defaults() {
     let file = TempFile::new("custom_types.ini");
 
-    let mut f = File::create(&file).unwrap();
-    f.write(b"[Defaults]").unwrap();
-
     let app = clap::App::new("test");
     let conf = Config::parse(app, &file).unwrap();
     assert_eq!(conf.no_file, 0);
@@ -348,6 +345,7 @@ fn defaults() {
     assert_eq!(conf.no_short_no_long, false);
     assert_eq!(conf.empty, 0);
     assert_eq!(conf.default, 246);
+    assert_eq!(conf.inverse, true);
     assert_eq!(conf.option_i32, None);
     assert_eq!(conf.someenum, Default::default());
     assert_eq!(conf.astruct, Default::default());

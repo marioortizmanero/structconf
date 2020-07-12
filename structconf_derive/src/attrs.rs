@@ -30,7 +30,7 @@ pub struct Attrs {
     #[darling(default)]
     pub help: Option<String>,
     #[darling(default)]
-    pub inverse_arg: bool,
+    pub negated_arg: bool,
     #[darling(default)]
     pub no_file: bool,
     #[darling(default)]
@@ -46,10 +46,53 @@ impl Attrs {
     /// shouldn't be used by itself.
     pub fn init(field: Field) -> Result<Attrs> {
         let mut attrs = Attrs::from_field(&field)?;
-        attrs.parse_type();
+        attrs.apply_rules();
         attrs.check_conflicts()?;
 
         Ok(attrs)
+    }
+
+    /// Applies some rules to itself depending on its attributes.
+    fn apply_rules(&mut self) {
+        // Painfully obtaining the type `T` inside `Option<T>` to assign
+        // `is_optional`.
+        if let Type::Path(TypePath {
+            path: Path { segments, .. },
+            ..
+        }) = &self.ty
+        {
+            if segments.len() == 1
+                && segments.first().unwrap().ident == "Option"
+            {
+                let args = &segments.first().unwrap().arguments;
+                use syn::{
+                    AngleBracketedGenericArguments as Brackets,
+                    GenericArgument::Type as InnerType,
+                    PathArguments::AngleBracketed as PathAngles,
+                };
+
+                // Obtaining the type inside the `Option<T>`.
+                if let PathAngles(Brackets { args, .. }) = args {
+                    if let InnerType(ty) = args.first().unwrap() {
+                        self.ty = ty.clone();
+                        self.is_option = true;
+                    }
+                }
+            }
+        }
+
+        // Only boolean flags won't take value.
+        self.takes_value = true;
+        if let Type::Path(TypePath {
+            path: Path { segments, .. },
+            ..
+        }) = &self.ty
+        {
+            if segments.len() == 1 && segments.first().unwrap().ident == "bool"
+            {
+                self.takes_value = false;
+            }
+        }
     }
 
     fn check_conflicts(&self) -> Result<()> {
@@ -85,7 +128,7 @@ impl Attrs {
                 (self.long.is_some(), "long"),
                 (self.short.is_some(), "short"),
                 (self.help.is_some(), "help"),
-                (self.inverse_arg, "inverse_arg"),
+                (self.negated_arg, "negated_arg"),
                 (self.file.is_some(), "file"),
                 (self.section.is_some(), "section"),
             ]
@@ -94,7 +137,7 @@ impl Attrs {
         check_conflicts!(
             (self.no_short && self.no_long, "no_short and no_long"),
             [
-                (self.inverse_arg, "inverse_arg"),
+                (self.negated_arg, "negated_arg"),
                 (self.help.is_some(), "help"),
             ]
         );
@@ -110,8 +153,11 @@ impl Attrs {
         );
 
         check_conflicts!(
-            (self.takes_value, "field's type"),
-            [(self.inverse_arg, "inverse_arg"),]
+            (self.negated_arg, "negated_arg"),
+            [
+                (self.takes_value, "field's type"),
+                (self.default.is_some(), "default"),
+            ]
         );
 
         check_conflicts!(
@@ -123,48 +169,6 @@ impl Attrs {
         );
 
         Ok(())
-    }
-
-    /// Obtains information from the field's type, like if it's an
-    /// `Option<T>` and if it takes value (it's not a boolean).
-    fn parse_type(&mut self) {
-        // Painfully obtaining the type `T` inside `Option<T>` for parsing.
-        if let Type::Path(TypePath {
-            path: Path { segments, .. },
-            ..
-        }) = &self.ty
-        {
-            if segments.len() == 1
-                && segments.first().unwrap().ident == "Option"
-            {
-                let args = &segments.first().unwrap().arguments;
-                use syn::{
-                    AngleBracketedGenericArguments as Brackets,
-                    GenericArgument::Type as InnerType,
-                    PathArguments::AngleBracketed as PathAngles,
-                };
-
-                // Obtaining the type inside the `Option<T>`.
-                if let PathAngles(Brackets { args, .. }) = args {
-                    if let InnerType(ty) = args.first().unwrap() {
-                        self.ty = ty.clone();
-                        self.is_option = true;
-                    }
-                }
-            }
-        }
-
-        self.takes_value = true;
-        if let Type::Path(TypePath {
-            path: Path { segments, .. },
-            ..
-        }) = &self.ty
-        {
-            if segments.len() == 1 && segments.first().unwrap().ident == "bool"
-            {
-                self.takes_value = false;
-            }
-        }
     }
 
     pub fn get_file_data(&self) -> OptFileData {
@@ -226,7 +230,7 @@ impl Attrs {
             long,
             short,
             help: self.help.clone(),
-            inverse: self.inverse_arg,
+            negated: self.negated_arg,
         })
     }
 
