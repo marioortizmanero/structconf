@@ -116,12 +116,16 @@ struct Config {
     empty: i32,
     #[conf(file = "new_file")]
     file: bool,
-    #[conf(long = "name")]
+    #[conf(long = "new_long")]
     long: bool,
     #[conf(short = "s")]
     short: bool,
     #[conf(file = "new_combined", long = "new_combined", short = "c")]
     combined: bool,
+    #[conf(default = "123 + 123")]
+    default: i64,
+    #[conf(no_short, inverse_arg, long = "no-value", default = "true")]
+    inverse: bool,
     #[conf(no_short)]
     someenum: MyEnum,
     #[conf(no_short)]
@@ -151,7 +155,10 @@ no_file = 1234
 no_short = \"true\"
 no_long = true
 new_file = true
-new_combined = true",
+new_combined = true
+someenum = Two
+astruct = 123;strval
+empty = 2134",
     )
     .unwrap();
 
@@ -165,6 +172,15 @@ new_combined = true",
     assert_eq!(conf.long, false);
     assert_eq!(conf.short, false);
     assert_eq!(conf.combined, true);
+    assert_eq!(conf.empty, 0); // not a config file option, should be default
+    assert_eq!(conf.someenum, MyEnum::Two);
+    assert_eq!(
+        conf.astruct,
+        MyStruct {
+            data: 123,
+            moredata: String::from("strval"),
+        }
+    );
 }
 
 #[test]
@@ -197,6 +213,34 @@ fn write_file() {
     assert_eq!(conf.combined, false); // Not written, it's the default
 }
 
+/// Making sure that the basic arguments are generated correctly.
+#[test]
+fn args() {
+    let file = TempFile::new("args.ini");
+
+    let app = clap::App::new("test");
+    let args = vec![
+        "test", // Program name
+        "--no-file 123", // Long for `no_file`
+        "--no-short",
+        "-x", // Renamed short for `no_long`
+        "--file",
+        "--new_long", // Renamed long for `long`
+        "--option-i32 321", // Optional parameter
+        "--no-value", // Long for `inverse`, should take the opposite value
+    ];
+    let args = Config::parse_args_from(app, args);
+    let conf = Config::parse_file(&args, &file).unwrap();
+    assert_eq!(conf.no_file, 123);
+    assert_eq!(conf.no_short, true);
+    assert_eq!(conf.no_long, true);
+    assert_eq!(conf.no_short_no_long, false);
+    assert_eq!(conf.empty, 0); // not an argument, should be default
+    assert_eq!(conf.file, true);
+    assert_eq!(conf.inverse, false);
+    assert_eq!(conf.option_i32, Some(321));
+}
+
 /// Testing the errors that may be thrown when parsing the config
 #[test]
 fn errors() {
@@ -225,71 +269,6 @@ no_short = \"should be a boolean\"",
         Err(Error::IO(_)) => assert!(true),
         _ => assert!(false, "IO error not returned"),
     }
-}
-
-/// Testing parsing for custom structures
-#[test]
-fn custom_types() {
-    let file = TempFile::new("custom_types.ini");
-
-    // Making sure the default values work.
-    let mut f = File::create(&file).unwrap();
-    f.write(b"[Defaults]").unwrap();
-
-    let app = clap::App::new("test");
-    let conf = Config::parse(app, &file).unwrap();
-    assert_eq!(conf.someenum, MyEnum::One);
-    assert_eq!(
-        conf.astruct,
-        MyStruct {
-            data: 0,
-            moredata: String::from("(nothing)")
-        }
-    );
-
-    // With actual values
-    f.write(
-        b"someenum = Two
-    astruct = 123;strval",
-    )
-    .unwrap();
-
-    let app = clap::App::new("test");
-    let conf = Config::parse(app, &file).unwrap();
-    assert_eq!(conf.someenum, MyEnum::Two);
-    assert_eq!(
-        conf.astruct,
-        MyStruct {
-            data: 123,
-            moredata: String::from("strval"),
-        }
-    );
-}
-
-#[test]
-fn inverse_arg() {
-    // TODO
-}
-
-/// Making sure an empty field isn't included in the config file or the
-/// argument parser.
-#[test]
-fn empty_field() {
-    let file = TempFile::new("empty_field.ini");
-
-    let mut f = File::create(&file).unwrap();
-    f.write(
-        b"[Defaults]
-empty = 1234",
-    )
-    .unwrap();
-
-    let app = clap::App::new("test");
-    let args = Config::parse_args(app);
-    let conf = Config::parse_file(&args, &file).unwrap();
-    // Should take the default value after parsing the config file and the
-    // arguments.
-    assert_eq!(conf.empty, 0);
 }
 
 // Options in `Option<T>` should be handled as expected.
@@ -343,4 +322,25 @@ option_string = some text goes here",
     assert_eq!(conf.option_i32, written_i32);
     assert_eq!(conf.option_enum, written_enum);
     assert_eq!(conf.option_string, written_string);
+}
+
+/// Making sure the default values work in all cases.
+#[test]
+fn defaults() {
+    let file = TempFile::new("custom_types.ini");
+
+    let mut f = File::create(&file).unwrap();
+    f.write(b"[Defaults]").unwrap();
+
+    let app = clap::App::new("test");
+    let conf = Config::parse(app, &file).unwrap();
+    assert_eq!(conf.no_file, 0);
+    assert_eq!(conf.no_short, false);
+    assert_eq!(conf.no_long, false);
+    assert_eq!(conf.no_short_no_long, false);
+    assert_eq!(conf.empty, 0);
+    assert_eq!(conf.default, 246);
+    assert_eq!(conf.option_i32, None);
+    assert_eq!(conf.someenum, Default::default());
+    assert_eq!(conf.astruct, Default::default());
 }
