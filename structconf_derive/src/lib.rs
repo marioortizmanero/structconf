@@ -52,12 +52,36 @@ pub fn derive_conf(input: TokenStream) -> TokenStream {
 }
 
 fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
-    // The fields are parsed into a higher level structure to translate them
-    // into the corresponding `TokenStream`s.
+    // An option may be empty, an argument, or from the config file. It
+    // might also be both an argument and from the config file separately,
+    // so they have to be mixed together in this function.
     let mut options = Vec::new();
+    let mut tok_fields = Vec::new();
     for field in fields.named.into_iter() {
         let attr = Attrs::init(field)?;
         let (opt1, opt2) = attr.parse_opt()?;
+
+        // If both attributes were returned, `opt1` will be the arguments
+        // and `opt2` will be the config file. Their name and default are
+        // guaranteed to be the same.
+        let name = &opt1.base.name;
+        let default = &opt1.into_field_default()?;
+        let first = &opt1.into_field_init()?;
+        let second = if let Some(opt) = &opt2 {
+            let tok = opt.into_field_init()?;
+            // The statement should be `else if`.
+            quote! { else #tok }
+        } else {
+            quote! {}
+        };
+        tok_fields.push(quote! {
+            #name: {
+                #first
+                #second
+                else { #default }
+            }
+        });
+
         options.push(opt1);
         if let Some(opt) = opt2 {
             options.push(opt);
@@ -65,13 +89,9 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
     }
     check_conflicts(&options)?;
 
-    // The iterables needed for the StructConf methods are translated to use
-    // them in the final `quote!`.
-    let mut tok_fields = Vec::new();
     let mut tok_args = Vec::new();
     let mut tok_to_file = Vec::new();
     for opt in options {
-        tok_fields.push(opt.into_field_init()?);
         if let Some(tok) = opt.into_arg_init() {
             tok_args.push(tok);
         }

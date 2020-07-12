@@ -285,10 +285,10 @@ impl Attrs {
         } else {
             Ok((Opt {
                 base: Rc::clone(&base),
-                kind: OptKind::File(file.unwrap()),
+                kind: OptKind::Arg(arg.unwrap()),
             }, Some(Opt {
                 base,
-                kind: OptKind::Arg(arg.unwrap()),
+                kind: OptKind::File(file.unwrap()),
             })))
         }
     }
