@@ -166,6 +166,10 @@ impl BasicOptAttrs {
             None
         } else {
             Some(OptFileData {
+                name: self
+                    .file
+                    .clone()
+                    .unwrap_or(self.ident.clone().unwrap().to_string()),
                 section: self
                     .section
                     .clone()
@@ -250,6 +254,7 @@ pub struct OptArgData {
 }
 
 pub struct OptFileData {
+    pub name: String,
     pub section: String,
 }
 
@@ -368,10 +373,10 @@ impl Opt {
             }
         }
 
-        if let Some(OptFileData { section, .. }) = &self.file {
+        if let Some(OptFileData { name, section }) = &self.file {
             value.extend(quote! {
                 if let None = opt {
-                    opt = file.get_from(Some(#section), stringify!(#name));
+                    opt = file.get_from(Some(#section), #name);
                 }
             });
         }
@@ -432,19 +437,20 @@ impl Opt {
     pub fn into_to_file(&self) -> Option<TokenStream2> {
         self.file.as_ref().and_then(|file| {
             let name = self.name.clone();
+            let file_name = file.name.as_str();
             let section = file.section.as_str();
 
             Some(if self.is_option {
                 quote! {
                     if let Some(val) = &self.#name {
                         conf.with_section(Some(#section))
-                            .set(stringify!(#name), val.to_string());
+                            .set(#file_name, val.to_string());
                     }
                 }
             } else {
                 quote! {
                     conf.with_section(Some(#section))
-                        .set(stringify!(#name), self.#name.to_string());
+                        .set(#file_name, self.#name.to_string());
                 }
             })
         })
