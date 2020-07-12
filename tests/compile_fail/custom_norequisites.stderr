@@ -6,12 +6,30 @@ error[E0277]: the trait bound `MyEnum: std::str::FromStr` is not satisfied
    |
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
 
+error[E0277]: the trait bound `MyEnum: std::default::Default` is not satisfied
+  --> $DIR/custom_norequisites.rs:17:10
+   |
+17 | #[derive(StructConf)]
+   |          ^^^^^^^^^^ the trait `std::default::Default` is not implemented for `MyEnum`
+   |
+   = note: required by `std::default::Default::default`
+   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
 error[E0277]: the trait bound `MyStruct: std::str::FromStr` is not satisfied
   --> $DIR/custom_norequisites.rs:17:10
    |
 17 | #[derive(StructConf)]
    |          ^^^^^^^^^^ the trait `std::str::FromStr` is not implemented for `MyStruct`
    |
+   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `MyStruct: std::default::Default` is not satisfied
+  --> $DIR/custom_norequisites.rs:17:10
+   |
+17 | #[derive(StructConf)]
+   |          ^^^^^^^^^^ the trait `std::default::Default` is not implemented for `MyStruct`
+   |
+   = note: required by `std::default::Default::default`
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0599]: no method named `to_string` found for enum `MyEnum` in the current scope

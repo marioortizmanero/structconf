@@ -26,69 +26,69 @@ use structconf::{Error, StructConf};
 
 #[derive(Debug, StructConf)]
 pub struct Config {
-    #[conf(help = "display debug messages.")]
+    #[conf(help = "Display debug messages")]
     debug: bool,
-    #[conf(no_file, help = "the config file path.")]
+    #[conf(no_file, help = "The config file path")]
     conf_file: Option<String>,
     #[conf(
         inverse_arg,
         default = "true",
         long = "no_lyrics",
         short = "n",
-        help = "do not print lyrics."
+        help = "Do not print lyrics"
     )]
     lyrics: bool,
-    #[conf(default = "true", help = "open the app in fullscreen mode.")]
+    #[conf(help = "Open the app in fullscreen mode")]
     fullscreen: bool,
-    #[conf(no_short, help = "activate the dark mode.")]
+    #[conf(no_short, help = "Activate the dark mode")]
     dark_mode: bool,
-    #[conf(no_short, help = "the window will stay on top of all apps.")]
+    #[conf(no_short, help = "The window will stay on top of all apps")]
     stay_on_top: bool,
     #[conf(
-        help = "the source music player used. Read the installation guide \
-           for a list with the available APIs."
+        help = "The source music player used. Read the installation guide \
+           for a list with the available APIs"
     )]
     api: Option<API>,
     #[conf(
-        help = "the output video player. Read the installation guide for \
-           a list with the available players."
+        help = "The output video player. Read the installation guide for \
+           a list with the available players"
     )]
     player: Option<Player>,
     #[conf(
         no_short,
-        help = "enable automatic audio synchronization. Read the \
+        help = "Enable automatic audio synchronization. Read the \
            installation guide for more information. Note: this feature is \
-           still in development."
+           still in development"
     )]
     audiosync: bool,
     #[conf(
         no_short,
-        help = "manual tweaking value for audiosync in milliseconds."
+        help = "Manual tweaking value for audiosync in milliseconds"
     )]
     audiosync_calibration: i32,
     #[conf(
         no_short,
-        help = "custom boolean flags used when opening mpv, with dashes and \
-           separated by spaces."
+        help = "Custom boolean flags used when opening mpv, with dashes and \
+           separated by spaces"
     )]
     mpv_flags: String,
     #[conf(
         no_short,
-        help = "the client ID for the Spotify Web API. Check the guide to \
-           learn how to obtain yours.",
+        help = "The client ID for the Spotify Web API. Check the guide to \
+           learn how to obtain yours",
         section = "SpotifyWeb"
     )]
     client_id: Option<String>,
     #[conf(
         no_short,
-        help = "the client secret for the Spotify Web API. Check the install \
-           guide to learn how to obtain yours.",
+        help = "The client secret for the Spotify Web API. Check the install \
+           guide to learn how to obtain yours",
         section = "SpotifyWeb"
     )]
     client_secret: Option<String>,
     #[conf(
         no_short,
-        help = "the redirect URI used for the Spotify Web API.",
+        help = "The redirect URI used for the Spotify Web API",
         section = "SpotifyWeb"
     )]
     redirect_uri: String,

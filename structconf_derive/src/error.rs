@@ -3,7 +3,8 @@ use std::fmt;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-// The errors that may occur during the execution of the procedural macro.
+/// The custom errors that may occur during the execution of the procedural
+/// macro, with a `span` to indicate precisely where the error happened.
 pub struct Error {
     pub kind: ErrorKind,
     pub span: Span,
@@ -23,14 +24,15 @@ impl fmt::Display for Error {
         use ErrorKind::*;
 
         match &self.kind {
-            DeriveType(ty) => {
-                write!(f, "Cannot #[derive(StructConf)] for the type `{}`, \
-                StructConf is only available for named structs.", ty)
-            }
+            DeriveType(ty) => write!(
+                f,
+                "Cannot #[derive(StructConf)] for the type `{}`, StructConf \
+                is only available for named structs.",
+                ty
+            ),
             ConflictAttrs(opt1, opt2) => write!(
                 f,
-                "`{}` and `{}` are conflicting attributes, they cannot go \
-                together in the same field.",
+                "`{}` is incompatible with `{}`.",
                 opt1, opt2
             ),
             ConflictIDs(attr, val) => write!(
