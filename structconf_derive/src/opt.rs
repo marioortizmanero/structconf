@@ -1,3 +1,11 @@
+//! A higher level structure to store data about an option, intended to
+//! be converted from an `Attrs`, and then parsed into token streams with
+//! actual generated code.
+//!
+//! The options are stored individually, meaning that a field in the derived
+//! struct can represent multiple options, like fields that are both a config
+//! file option and an argument.
+
 use crate::error::Result;
 
 use proc_macro2::TokenStream as TokenStream2;
@@ -5,9 +13,8 @@ use quote::quote;
 use std::rc::Rc;
 use syn::{Expr, Ident, Type};
 
-// DATA STRUCTURES
 pub struct OptBaseData {
-    pub name: Ident,
+    pub id: Ident,
     pub ty: Type,
     pub is_option: bool,
     pub default: Option<String>,
@@ -25,50 +32,29 @@ pub struct OptFileData {
     pub section: String,
 }
 
-// IMPLEMENTATION OF THE OPT TYPES
 pub enum OptKind {
+    /// Not an option
     Empty,
+    /// An argument that takes value
     Arg(OptArgData),
+    /// An argument that doesn't take value
     Flag(OptArgData),
+    /// A config file option
     File(OptFileData),
 }
 
 pub struct Opt {
+    /// As an option can share multiple fields, the base data is shared
+    /// among multiple of them.
     pub base: Rc<OptBaseData>,
+    /// This field contains information specific to the type of argument
+    /// it is.
     pub kind: OptKind,
 }
 
 impl Opt {
-    /// Expected output:
-    ///
-    /// TAKES VALUE:
-    /// ```rust
-    /// if let Some(val) = args.value_of(...) {
-    ///     parse(val)
-    /// }
-    /// else if let Some(val) = file.get_from(...) {
-    ///     parse(val)
-    /// }
-    /// else {
-    ///     Ok(default)
-    /// }
-    /// ```
-    ///
-    /// DOESN'T TAKE VALUE:
-    /// ```rust
-    /// if args.is_present(...) {
-    ///     // if `arg_inverse`, it's false
-    ///     true
-    /// }
-    /// else if let Some(val) = file.get_from(...) {
-    ///     val
-    /// }
-    /// else {
-    ///     default
-    /// }
-    /// ```
-
-    pub fn into_field_default(&self) -> Result<TokenStream2> {
+    /// Generates the default value the option will take as a fallback.
+    pub fn gen_default(&self) -> Result<TokenStream2> {
         match &self.base.default {
             Some(expr) => {
                 let expr = syn::parse_str::<Expr>(&expr)?;
@@ -88,8 +74,12 @@ impl Opt {
         }
     }
 
-    pub fn into_field_init(&self) -> Result<TokenStream2> {
-        let name = &self.base.name;
+    /// Generates the field initialization logic. This may read data from the
+    /// config file or the argument parser results following the structure
+    /// found in the main file's `impl_conf_macro`, which combines all the
+    /// options for a field in order.
+    pub fn gen_field_init(&self) -> Result<TokenStream2> {
+        let name = &self.base.id;
         let ty = &self.base.ty;
         let parse = quote! {
             let val = val
@@ -106,7 +96,7 @@ impl Opt {
 
         match &self.kind {
             OptKind::Empty => {
-                let default = self.into_field_default()?;
+                let default = self.gen_default()?;
                 Ok(quote! {
                     if true {
                         #default
@@ -141,12 +131,14 @@ impl Opt {
         }
     }
 
-    pub fn into_arg_init(&self) -> Option<TokenStream2> {
-        let id = self.base.name.to_string();
+    /// Generates the argument initialization logic for `clap`. This will
+    /// only work for options that represent an argument.
+    pub fn gen_arg_init(&self) -> Option<TokenStream2> {
         if let OptKind::Arg(OptArgData {
             help, long, short, ..
         }) = &self.kind
         {
+            let id = self.base.id.to_string();
             let mut init = quote! {
                 ::clap::Arg::with_name(#id)
             };
@@ -181,9 +173,11 @@ impl Opt {
         }
     }
 
-    pub fn into_to_file(&self) -> Option<TokenStream2> {
-        let id = &self.base.name;
+    /// Generates the logic to write to a config file with `rust-ini`. This
+    /// will only work for options available in the config file.
+    pub fn gen_write_file(&self) -> Option<TokenStream2> {
         if let OptKind::File(OptFileData { name, section }) = &self.kind {
+            let id = &self.base.id;
             if self.base.is_option {
                 Some(quote! {
                     if let Some(val) = &self.#id {

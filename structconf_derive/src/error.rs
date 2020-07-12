@@ -3,7 +3,8 @@ use std::fmt;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-// The errors that may occur during the execution of the procedural macro.
+/// The custom errors that may occur during the execution of the procedural
+/// macro, with a `span` to indicate precisely where the error happened.
 pub struct Error {
     pub kind: ErrorKind,
     pub span: Span,

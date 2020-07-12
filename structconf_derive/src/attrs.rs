@@ -1,7 +1,5 @@
 //! The basic structure for the field's data, containing all the available
-//! attributes in `#[conf(...)]` and some additional data. This is first
-//! obtained with the module `darling`, and then parsed into a higher level
-//! structure defined later.
+//! attributes in `#[conf(...)]` and some additional contents.
 
 use crate::error::{Error, ErrorKind, Result};
 use crate::opt::{Opt, OptArgData, OptBaseData, OptFileData, OptKind};
@@ -10,7 +8,7 @@ use darling::FromField;
 use std::rc::Rc;
 use syn::{spanned::Spanned, Field, Ident, Path, Type, TypePath};
 
-#[derive(Clone, FromField)]
+#[derive(FromField)]
 #[darling(attributes(conf))]
 pub struct Attrs {
     pub ident: Option<Ident>,
@@ -77,14 +75,13 @@ impl Attrs {
             };
         }
 
-        // Empty fields may not use any other attribute
+        // Empty fields may not use any other attribute, except for `default`.
         check_conflicts!(
             (
                 self.no_short && self.no_long && self.no_file,
                 "no_short, no_long and no_file"
             ),
             [
-                (self.default.is_some(), "default"),
                 (self.long.is_some(), "long"),
                 (self.short.is_some(), "short"),
                 (self.help.is_some(), "help"),
@@ -234,7 +231,7 @@ impl Attrs {
         let base = Rc::new(OptBaseData {
             is_option: self.is_option,
             default: self.default.clone(),
-            name: self.ident.clone().unwrap(),
+            id: self.ident.clone().unwrap(),
             ty: self.ty.clone(),
         });
 
