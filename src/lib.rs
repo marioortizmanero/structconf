@@ -72,9 +72,9 @@
 //! available in the argument parser at all.
 //!
 //! ## Config file attributes
-//! * `file = "..."`: a custom name for the config file. Otherwise, it will
-//! be the same as the field's name.
-//! * `no_file`: won't include the option in the config file.
+//! * `file = "..."`: set a custom name in the config file. Otherwise, it will
+//! be the same as the field's identifier.
+//! * `no_file`: don't include the option in the config file.
 //! * `section`: the section in the config file where the option will be.
 //! Otherwise, `Default` is used. For example,
 //! `#[structconf(section = "Planes")] model_id: i32` will look like this in

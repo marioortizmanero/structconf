@@ -43,4 +43,4 @@ pub fn main() {
 }
 ```
 
-For more detauils on how to use Structconf, read [the docs](https://docs.rs/structconf/) and check out the [examples](examples).
+For more details on how to use Structconf, read [the docs](https://docs.rs/structconf/) and check out the [examples](examples).
