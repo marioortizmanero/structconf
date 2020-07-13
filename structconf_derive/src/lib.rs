@@ -110,9 +110,9 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
             fn parse(
                 app: ::clap::App,
                 path: &str
-            ) -> Result<#name, ::structconf::Error>
+            ) -> ::std::result::Result<#name, ::structconf::Error>
                 where
-                    Self: Sized
+                    Self: ::std::marker::Sized
             {
                 let args = #name::parse_args(app);
                 #name::parse_file(&args, path)
@@ -128,12 +128,13 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
             }
 
             fn parse_args_from<'a, I, T>(
-                app: clap::App<'a, 'a>,
+                app: ::clap::App<'a, 'a>,
                 iter: I,
             ) -> clap::ArgMatches<'a>
                 where
-                    I: IntoIterator<Item = T>,
-                    T: Into<::std::ffi::OsString> + Clone {
+                    I: ::std::iter::IntoIterator<Item = T>,
+                    T: ::std::convert::Into<::std::ffi::OsString>
+                        + ::std::clone::Clone {
                 app.args(&[
                     #(#tok_args,)*
                 ]).get_matches_from(iter)
@@ -142,7 +143,9 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
             fn parse_file(
                 args: &::clap::ArgMatches,
                 path: &str
-            ) -> Result<#name, ::structconf::Error> where Self: Sized {
+            ) -> ::std::result::Result<#name, ::structconf::Error>
+                where
+                    Self: ::std::marker::Sized {
                 // Checking that the config file exists, and creating it
                 // otherwise.
                 let path_wrap = ::std::path::Path::new(path);
@@ -160,7 +163,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
             fn write_file(
                 &self,
                 path: &str
-            ) -> Result<(), ::structconf::Error> {
+            ) -> ::std::result::Result<(), ::structconf::Error> {
                 let mut conf = ::ini::Ini::new();
                 #(#tok_write_file)*
                 conf.write_to_file(path)?;

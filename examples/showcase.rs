@@ -11,7 +11,7 @@ use strum_macros::{Display, EnumString};
 pub enum Count {
     One,
     Two,
-    Three
+    Three,
 }
 
 impl Default for Count {
@@ -58,7 +58,7 @@ struct Config {
     pub optional_field: Option<String>,
     #[conf(help = "custom type")]
     // Custom types
-    pub count: Count
+    pub count: Count,
 }
 
 pub fn main() {

@@ -60,7 +60,7 @@ impl Opt {
                 let expr = syn::parse_str::<Expr>(&expr)?;
 
                 if self.base.is_option {
-                    Ok(quote! { Some(#expr) })
+                    Ok(quote! { ::std::option::Option::Some(#expr) })
                 } else {
                     Ok(quote! { #expr })
                 }
@@ -73,7 +73,7 @@ impl Opt {
                 {
                     Ok(quote! { true })
                 } else if self.base.is_option {
-                    Ok(quote! { None })
+                    Ok(quote! { ::std::option::Option::None })
                 } else {
                     Ok(quote! { ::std::default::Default::default() })
                 }
@@ -96,7 +96,7 @@ impl Opt {
                 })?;
         };
         let ret = if self.base.is_option {
-            quote! { Some(val) }
+            quote! { ::std::option::Option::Some(val) }
         } else {
             quote! { val }
         };
@@ -124,13 +124,17 @@ impl Opt {
                 })
             }
             OptKind::Arg(_) => Ok(quote! {
-                if let Some(val) = args.value_of(stringify!(#name)) {
+                if let ::std::option::Option::Some(val)
+                        = args.value_of(stringify!(#name)) {
                     #parse
                     #ret
                 }
             }),
             OptKind::File(OptFileData { name, section }) => Ok(quote! {
-                if let Some(val) = file.get_from(Some(#section), #name) {
+                if let ::std::option::Option::Some(val) = file.get_from(
+                    ::std::option::Option::Some(#section),
+                    #name,
+                ) {
                     #parse
                     #ret
                 }
@@ -191,14 +195,18 @@ impl Opt {
                 let id = &self.base.id;
                 if self.base.is_option {
                     Some(quote! {
-                        if let Some(val) = &self.#id {
-                            conf.with_section(Some(#section))
+                        if let ::std::option::Option::Some(val) = &self.#id {
+                            conf.with_section(
+                                    ::std::option::Option::Some(#section),
+                                )
                                 .set(#name, val.to_string());
                         }
                     })
                 } else {
                     Some(quote! {
-                        conf.with_section(Some(#section))
+                        conf.with_section(
+                                ::std::option::Option::Some(#section),
+                            )
                             .set(#name, self.#id.to_string());
                     })
                 }
