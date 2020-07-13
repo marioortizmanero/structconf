@@ -103,19 +103,16 @@ fn init_config() -> Result<Config, Error> {
         .version(clap::crate_version!())
         .author(clap::crate_authors!());
     let args = Config::parse_args(app);
-    match args.value_of("config_path") {
-        Some(path) => Config::parse_file(&args, path),
+    let path = match args.value_of("config_path") {
+        Some(path) => path.to_string(),
         None => {
             let mut path =
                 dirs::config_dir().expect("Couldn't find user's config path");
             path.extend(["vidify", "config.ini"].iter());
-            Config::parse_file(
-                &args,
-                path.to_str()
-                    .expect("Invalid UTF-8 in the config file path"),
-            )
+            path.to_string_lossy().into_owned()
         }
-    }
+    };
+    Config::parse_file(&args, &path)
 }
 
 pub fn main() {
