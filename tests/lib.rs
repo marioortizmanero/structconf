@@ -68,7 +68,7 @@ impl Default for MyEnum {
 
 /// Defining a struct to use in a StructConf-derived structure.
 /// The required traits are implemented manually.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq)]
 struct MyStruct {
     data: i32,
     moredata: String,
@@ -90,15 +90,6 @@ impl FromStr for MyStruct {
 impl fmt::Display for MyStruct {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{};{}", self.data, self.moredata)
-    }
-}
-
-impl Default for MyStruct {
-    fn default() -> Self {
-        MyStruct {
-            data: 0,
-            moredata: String::from("(nothing)"),
-        }
     }
 }
 
