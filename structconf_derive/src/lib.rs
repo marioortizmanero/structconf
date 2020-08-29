@@ -30,15 +30,15 @@ pub fn derive_conf(input: TokenStream) -> TokenStream {
             ..
         }) => impl_conf_macro(name, named_fields),
         Data::Struct(_) => Err(Error {
-            kind: ErrorKind::DeriveType(String::from("unnamed struct")),
+            kind: ErrorKind::DeriveType("unnamed struct".to_string()),
             span,
         }),
         Data::Enum(_) => Err(Error {
-            kind: ErrorKind::DeriveType(String::from("enum")),
+            kind: ErrorKind::DeriveType("enum".to_string()),
             span,
         }),
         Data::Union(_) => Err(Error {
-            kind: ErrorKind::DeriveType(String::from("union")),
+            kind: ErrorKind::DeriveType("union".to_string()),
             span,
         }),
     };
@@ -177,7 +177,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
 }
 
 // Looks for conflicts in the options as a whole, like repeated IDs.
-fn check_conflicts(opts: &Vec<Opt>) -> Result<()> {
+fn check_conflicts(opts: &[Opt]) -> Result<()> {
     let mut files = HashSet::new();
     let mut longs = HashSet::new();
     let mut shorts = HashSet::new();

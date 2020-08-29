@@ -169,8 +169,11 @@ impl Attrs {
             name: self
                 .file
                 .clone()
-                .unwrap_or(self.ident.as_ref().unwrap().to_string()),
-            section: self.section.clone().unwrap_or(String::from("Defaults")),
+                .unwrap_or_else(|| self.ident.as_ref().unwrap().to_string()),
+            section: self
+                .section
+                .clone()
+                .unwrap_or_else(|| "Defaults".to_string()),
         }
     }
 
@@ -182,7 +185,7 @@ impl Attrs {
         let long = if self.no_long {
             None
         } else {
-            let long = self.long.clone().unwrap_or(ident.clone());
+            let long = self.long.clone().unwrap_or_else(|| ident.clone());
             Some(long.replace("_", "-"))
         };
 
@@ -202,10 +205,11 @@ impl Attrs {
                         _ => {
                             return Err(Error {
                                 span: self.ident.span(),
-                                kind: ErrorKind::Parse(String::from(
+                                kind: ErrorKind::Parse(
                                     "short argument can't be longer than \
-                                    one character",
-                                )),
+                                    one character"
+                                        .to_string(),
+                                ),
                             })
                         }
                     }
@@ -214,7 +218,7 @@ impl Attrs {
                     // Otherwise, the short name is obtained from the
                     // identifier, which must be at least a character
                     // long, so `unwrap()` is used.
-                    Some(ident.chars().nth(0).unwrap().to_string())
+                    Some(ident.chars().next().unwrap().to_string())
                 }
             }
         };
