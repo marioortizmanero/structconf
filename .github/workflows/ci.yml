@@ -92,19 +92,3 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
-
-  rust-clippy-macro:
-    name: Rust clippy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@master
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - run: rustup component add clippy
-      - run: cd structconf_derive
-      - uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: -- -D warnings
