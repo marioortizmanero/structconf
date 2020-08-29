@@ -21,6 +21,19 @@ jobs:
         with:
           command: check
 
+  rust-check-macro:
+    name: Rust check derive macro
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - run: cd structconf_derive
+      - uses: actions-rs/cargo@v1
+        with:
+          command: check
+
   rust-test:
     name: Rust test
     runs-on: ubuntu-latest
@@ -49,6 +62,22 @@ jobs:
           command: fmt
           args: --all -- --check
 
+  rust-fmt-macro:
+    name: Rust formatting macro
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - run: rustup component add rustfmt
+      - run: cd structconf_derive
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
   rust-clippy:
     name: Rust clippy
     runs-on: ubuntu-latest
@@ -59,6 +88,22 @@ jobs:
           toolchain: stable
           override: true
       - run: rustup component add clippy
+      - uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -D warnings
+
+  rust-clippy-macro:
+    name: Rust clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - run: rustup component add clippy
+      - run: cd structconf_derive
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
