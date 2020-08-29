@@ -43,15 +43,11 @@ pub struct Config {
     dark_mode: bool,
     #[conf(no_short, help = "The window will stay on top of all apps")]
     stay_on_top: bool,
-    #[conf(
-        help = "The source music player used. Read the installation guide \
-           for a list with the available APIs"
-    )]
+    #[conf(help = "The source music player used. Read the installation guide \
+           for a list with the available APIs")]
     api: Option<API>,
-    #[conf(
-        help = "The output video player. Read the installation guide for \
-           a list with the available players"
-    )]
+    #[conf(help = "The output video player. Read the installation guide for \
+           a list with the available players")]
     player: Option<Player>,
     #[conf(
         no_short,
@@ -60,10 +56,7 @@ pub struct Config {
            still in development"
     )]
     audiosync: bool,
-    #[conf(
-        no_short,
-        help = "Manual tweaking value for audiosync in milliseconds"
-    )]
+    #[conf(no_short, help = "Manual tweaking value for audiosync in milliseconds")]
     audiosync_calibration: i32,
     #[conf(
         no_short,
@@ -106,8 +99,7 @@ fn init_config() -> Result<Config, Error> {
     let path = match args.value_of("config_path") {
         Some(path) => path.to_string(),
         None => {
-            let mut path =
-                dirs::config_dir().expect("Couldn't find user's config path");
+            let mut path = dirs::config_dir().expect("Couldn't find user's config path");
             path.extend(["vidify", "config.ini"].iter());
             path.to_string_lossy().into_owned()
         }

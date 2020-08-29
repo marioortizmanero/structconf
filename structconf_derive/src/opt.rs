@@ -68,9 +68,7 @@ impl Opt {
             None => {
                 // Negated flags are always true by default. They also can't
                 // have a `default` field.
-                if let OptKind::Flag(OptArgData { negated: true, .. }) =
-                    self.kind
-                {
+                if let OptKind::Flag(OptArgData { negated: true, .. }) = self.kind {
                     Ok(quote! { true })
                 } else if self.base.is_option {
                     Ok(quote! { ::std::option::Option::None })

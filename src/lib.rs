@@ -18,11 +18,8 @@
 //!     pub timeout: i32,
 //! }
 //!
-//! pub fn main() {
-//!     let app = App::new("demo");
-//!     let conf = ServerConfig::parse(app, "config.ini");
-//!     println!("Parsed config: {:#?}", conf);
-//! }
+//! let app = App::new("demo");
+//! let conf = ServerConfig::parse(app, "config.ini");
 //! ```
 //!
 //! Any named struct that uses `#[derive(StructConf)]` will have the methods
@@ -151,10 +148,7 @@ pub trait StructConf {
 
     /// Parses only the arguments with [clap](
     /// https://docs.rs/clap/2.33.1/clap/) from an iterator.
-    fn parse_args_from<'a, I, T>(
-        app: clap::App<'a, 'a>,
-        iter: I,
-    ) -> clap::ArgMatches<'a>
+    fn parse_args_from<'a, I, T>(app: clap::App<'a, 'a>, iter: I) -> clap::ArgMatches<'a>
     where
         I: IntoIterator<Item = T>,
         T: Into<OsString> + Clone;

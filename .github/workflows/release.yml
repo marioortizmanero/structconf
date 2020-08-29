@@ -32,7 +32,7 @@ jobs:
         - name: Publish derive macro
           env: 
               CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-          run: cd structconf_derive && cargo publish --token "${CRATES_IO_TOKEN}"
+          run: cd structconf_derive && cargo publish --token "$CRATES_IO_TOKEN"
 
         - name: Wait for the derive macro to publish
           run: sleep 240
@@ -40,4 +40,4 @@ jobs:
         - name: Publish original
           env: 
               CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-          run: cargo publish --token "${CRATES_IO_TOKEN}"
+          run: cargo publish --token "$CRATES_IO_TOKEN"

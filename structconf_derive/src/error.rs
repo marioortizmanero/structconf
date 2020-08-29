@@ -30,18 +30,14 @@ impl fmt::Display for Error {
                 is only available for named structs.",
                 ty
             ),
-            ConflictAttrs(opt1, opt2) => {
-                write!(f, "`{}` is incompatible with `{}`.", opt1, opt2)
-            }
+            ConflictAttrs(opt1, opt2) => write!(f, "`{}` is incompatible with `{}`.", opt1, opt2),
             ConflictIDs(attr, val) => write!(
                 f,
                 "The `{}` attribute with value `{}` is repeated with another \
                 field.",
                 attr, val
             ),
-            Value(opt, val) => {
-                write!(f, "Invalid value for `{}`: {}", opt, val)
-            }
+            Value(opt, val) => write!(f, "Invalid value for `{}`: {}", opt, val),
             Parse(desc) => write!(f, "Couldn't parse attribute: {}", desc),
         }
     }

@@ -61,13 +61,10 @@ impl Attrs {
             ..
         }) = &self.ty
         {
-            if segments.len() == 1
-                && segments.first().unwrap().ident == "Option"
-            {
+            if segments.len() == 1 && segments.first().unwrap().ident == "Option" {
                 let args = &segments.first().unwrap().arguments;
                 use syn::{
-                    AngleBracketedGenericArguments as Brackets,
-                    GenericArgument::Type as InnerType,
+                    AngleBracketedGenericArguments as Brackets, GenericArgument::Type as InnerType,
                     PathArguments::AngleBracketed as PathAngles,
                 };
 
@@ -88,8 +85,7 @@ impl Attrs {
             ..
         }) = &self.ty
         {
-            if segments.len() == 1 && segments.first().unwrap().ident == "bool"
-            {
+            if segments.len() == 1 && segments.first().unwrap().ident == "bool" {
                 self.takes_value = false;
             }
         }
@@ -147,10 +143,7 @@ impl Attrs {
             [(self.short.is_some(), "short"),]
         );
 
-        check_conflicts!(
-            (self.no_long, "no_long"),
-            [(self.long.is_some(), "long"),]
-        );
+        check_conflicts!((self.no_long, "no_long"), [(self.long.is_some(), "long"),]);
 
         check_conflicts!(
             (self.negated_arg, "negated_arg"),
