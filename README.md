@@ -23,8 +23,7 @@ StructConf aims to be relatively small and simple. Here are its current selling 
 Small example:
 
 ```rust
-use clap::App;
-use structconf::StructConf;
+use structconf::{clap, StructConf};
 
 #[derive(Debug, StructConf)]
 struct ServerConfig {
@@ -37,7 +36,7 @@ struct ServerConfig {
 }
 
 pub fn main() {
-    let app = App::new("demo");
+    let app = clap::App::new("demo");
     let conf = ServerConfig::parse(app, "config.ini");
     println!("Parsed config: {:#?}", conf);
 }

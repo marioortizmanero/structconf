@@ -5,8 +5,7 @@
 //! https://github.com/vidify/structconf/tree/master/examples)):
 //!
 //! ```rust
-//! use clap::App;
-//! use structconf::StructConf;
+//! use structconf::{clap, StructConf};
 //!
 //! #[derive(Debug, StructConf)]
 //! struct ServerConfig {
@@ -18,7 +17,7 @@
 //!     pub timeout: i32,
 //! }
 //!
-//! let app = App::new("demo");
+//! let app = clap::App::new("demo");
 //! let conf = ServerConfig::parse(app, "config.ini");
 //! ```
 //!
@@ -26,6 +25,10 @@
 //! from [`structconf::StructConf`](
 //! https://docs.rs/structconf/latest/structconf/trait.StructConf.html)
 //! available.
+//!
+//! You can access the `clap` and `ini` crates inside `structconf::clap` and
+//! `structconf::ini` to avoid duplicate dependencies and not having to include
+//! them in your `Cargo.toml`.
 //!
 //! Additional attributes can be added to its fields to customize how they
 //! are parsed:
@@ -82,6 +85,10 @@
 //! model_id = 123
 //! ```
 
+/// Re-exporting the `clap` module used in the macro.
+pub use clap;
+/// Re-exporting the `ini` module used in the macro.
+pub use ini;
 pub use structconf_derive::StructConf;
 
 use std::ffi::OsString;

@@ -21,8 +21,7 @@ pub enum Player {
     External,
 }
 
-use clap::App;
-use structconf::{Error, StructConf};
+use structconf::{clap, Error, StructConf};
 
 #[derive(Debug, StructConf)]
 pub struct Config {
@@ -92,7 +91,7 @@ pub struct Config {
 /// will be at the user's default config path, or whichever is specified
 /// by `--config-file`.
 fn init_config() -> Result<Config, Error> {
-    let app = App::new("vidify")
+    let app = clap::App::new("vidify")
         .version(clap::crate_version!())
         .author(clap::crate_authors!());
     let args = Config::parse_args(app);

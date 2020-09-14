@@ -10,7 +10,7 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::path::Path;
 use std::str::FromStr;
-use structconf::{Error, StructConf};
+use structconf::{clap, Error, StructConf};
 use strum_macros::{Display, EnumString};
 
 /// `TempFile` is a very simple wrapper for automatically cleaning up files

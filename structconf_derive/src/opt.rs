@@ -152,7 +152,7 @@ impl Opt {
             }) => {
                 let id = self.base.id.to_string();
                 let mut init = quote! {
-                    ::clap::Arg::with_name(#id)
+                    ::structconf::clap::Arg::with_name(#id)
                 };
 
                 if let Some(help) = help {

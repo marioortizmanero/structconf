@@ -108,7 +108,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
     let trait_impl = quote! {
         impl StructConf for #name {
             fn parse(
-                app: ::clap::App,
+                app: ::structconf::clap::App,
                 path: &str
             ) -> ::std::result::Result<#name, ::structconf::Error>
                 where
@@ -119,8 +119,8 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
             }
 
             fn parse_args<'a>(
-                app: ::clap::App<'a, 'a>
-            ) -> ::clap::ArgMatches<'a> {
+                app: ::structconf::clap::App<'a, 'a>
+            ) -> ::structconf::clap::ArgMatches<'a> {
                 #name::parse_args_from(
                     app,
                     &mut ::std::env::args()
@@ -128,9 +128,9 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
             }
 
             fn parse_args_from<'a, I, T>(
-                app: ::clap::App<'a, 'a>,
+                app: ::structconf::clap::App<'a, 'a>,
                 iter: I,
-            ) -> clap::ArgMatches<'a>
+            ) -> ::structconf::clap::ArgMatches<'a>
                 where
                     I: ::std::iter::IntoIterator<Item = T>,
                     T: ::std::convert::Into<::std::ffi::OsString>
@@ -141,7 +141,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
             }
 
             fn parse_file(
-                args: &::clap::ArgMatches,
+                args: &::structconf::clap::ArgMatches,
                 path: &str
             ) -> ::std::result::Result<#name, ::structconf::Error>
                 where
@@ -154,7 +154,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
                     eprintln!("Created config file at {}", path);
                 }
 
-                let file = ::ini::Ini::load_from_file(path)?;
+                let file = ::structconf::ini::Ini::load_from_file(path)?;
                 Ok(#name {
                     #(#tok_fields,)*
                 })
@@ -164,7 +164,7 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
                 &self,
                 path: &str
             ) -> ::std::result::Result<(), ::structconf::Error> {
-                let mut conf = ::ini::Ini::new();
+                let mut conf = ::structconf::ini::Ini::new();
                 #(#tok_write_file)*
                 conf.write_to_file(path)?;
 

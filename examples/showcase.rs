@@ -3,8 +3,7 @@
 //! flags you'd like to pass, or create `./config.ini` to test out the
 //! config file.
 
-use clap::App;
-use structconf::StructConf;
+use structconf::{clap, StructConf};
 use strum_macros::{Display, EnumString};
 
 #[derive(Debug, Display, EnumString)]
@@ -62,7 +61,7 @@ struct Config {
 }
 
 pub fn main() {
-    let app = App::new("demo");
+    let app = clap::App::new("demo");
     let conf = Config::parse(app, "config.ini");
     println!("Parsed config: {:#?}", conf);
 }
