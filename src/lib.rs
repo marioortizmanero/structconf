@@ -85,32 +85,18 @@
 pub use structconf_derive::StructConf;
 
 use std::ffi::OsString;
-use std::fmt;
 use std::io;
 
 /// Small wrapper for the possible errors that may occur when parsing a
 /// StructConf-derived struct.
-#[derive(Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum Error {
-    IO(io::Error),
+    #[error("{0}")]
+    IO(#[from] io::Error),
+    #[error("{0}")]
     Ini(ini::ini::ParseError),
+    #[error("Error when parsing the config file: {0}")]
     Parse(String),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match &self {
-            Error::IO(err) => err.fmt(f),
-            Error::Ini(err) => err.fmt(f),
-            Error::Parse(msg) => write!(f, "Error when parsing: {}", msg),
-        }
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(err: io::Error) -> Self {
-        Error::IO(err)
-    }
 }
 
 impl From<ini::ini::Error> for Error {
