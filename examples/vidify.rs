@@ -1,6 +1,7 @@
-//! This example is the configuration file used for Vidify. The config file
-//! resides at "vidify/config.ini" inside your user's config directory,
-//! but it can also be specified with `--config-file`.
+//! This example is the configuration file used for Vidify
+//! (https://github.com/vidify/vidify). The config file resides at
+//! "vidify/config.ini" inside your user's config directory, but it can also be
+//! specified with `--config-file`.
 //!
 //! It includes custom types with `FromStr` and `ToString`, which are
 //! automatically derived with the crate `strum`.
