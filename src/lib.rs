@@ -101,16 +101,16 @@ pub enum Error {
     #[error("{0}")]
     IO(#[from] io::Error),
     #[error("{0}")]
-    Ini(ini::ini::ParseError),
+    Ini(ini::ParseError),
     #[error("Error when parsing the config file: {0}")]
     Parse(String),
 }
 
-impl From<ini::ini::Error> for Error {
-    fn from(err: ini::ini::Error) -> Self {
+impl From<ini::Error> for Error {
+    fn from(err: ini::Error) -> Self {
         match err {
-            ini::ini::Error::Io(err) => Error::IO(err),
-            ini::ini::Error::Parse(err) => Error::Ini(err),
+            ini::Error::Io(err) => Error::IO(err),
+            ini::Error::Parse(err) => Error::Ini(err),
         }
     }
 }

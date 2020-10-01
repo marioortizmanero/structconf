@@ -15,7 +15,7 @@ readme = "README.md"
 
 [dependencies]
 clap = "2.33.1"
-rust-ini = "0.15.3"
+rust-ini = "0.16.0"
 structconf_derive = { version = "0.4.0", path = "structconf_derive" }
 thiserror = "1.0.20"
 
