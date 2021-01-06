@@ -1,33 +1,33 @@
-error[E0277]: the trait bound `MyEnum: std::str::FromStr` is not satisfied
+error[E0277]: the trait bound `MyEnum: FromStr` is not satisfied
   --> $DIR/custom_norequisites.rs:17:10
    |
 17 | #[derive(StructConf)]
-   |          ^^^^^^^^^^ the trait `std::str::FromStr` is not implemented for `MyEnum`
+   |          ^^^^^^^^^^ the trait `FromStr` is not implemented for `MyEnum`
    |
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error[E0277]: the trait bound `MyEnum: std::default::Default` is not satisfied
+error[E0277]: the trait bound `MyEnum: Default` is not satisfied
   --> $DIR/custom_norequisites.rs:17:10
    |
 17 | #[derive(StructConf)]
-   |          ^^^^^^^^^^ the trait `std::default::Default` is not implemented for `MyEnum`
+   |          ^^^^^^^^^^ the trait `Default` is not implemented for `MyEnum`
    |
    = note: required by `std::default::Default::default`
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error[E0277]: the trait bound `MyStruct: std::str::FromStr` is not satisfied
+error[E0277]: the trait bound `MyStruct: FromStr` is not satisfied
   --> $DIR/custom_norequisites.rs:17:10
    |
 17 | #[derive(StructConf)]
-   |          ^^^^^^^^^^ the trait `std::str::FromStr` is not implemented for `MyStruct`
+   |          ^^^^^^^^^^ the trait `FromStr` is not implemented for `MyStruct`
    |
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error[E0277]: the trait bound `MyStruct: std::default::Default` is not satisfied
+error[E0277]: the trait bound `MyStruct: Default` is not satisfied
   --> $DIR/custom_norequisites.rs:17:10
    |
 17 | #[derive(StructConf)]
-   |          ^^^^^^^^^^ the trait `std::default::Default` is not implemented for `MyStruct`
+   |          ^^^^^^^^^^ the trait `Default` is not implemented for `MyStruct`
    |
    = note: required by `std::default::Default::default`
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
@@ -39,15 +39,15 @@ error[E0599]: no method named `to_string` found for enum `MyEnum` in the current
    | -----------
    | |
    | method `to_string` not found for this
+   | doesn't satisfy `MyEnum: ToString`
    | doesn't satisfy `MyEnum: std::fmt::Display`
-   | doesn't satisfy `MyEnum: std::string::ToString`
 ...
 17 | #[derive(StructConf)]
    |          ^^^^^^^^^^ method not found in `MyEnum`
    |
    = note: the method `to_string` exists but the following trait bounds were not satisfied:
            `MyEnum: std::fmt::Display`
-           which is required by `MyEnum: std::string::ToString`
+           which is required by `MyEnum: ToString`
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0599]: no method named `to_string` found for struct `MyStruct` in the current scope
@@ -57,13 +57,13 @@ error[E0599]: no method named `to_string` found for struct `MyStruct` in the cur
    | ---------------
    | |
    | method `to_string` not found for this
+   | doesn't satisfy `MyStruct: ToString`
    | doesn't satisfy `MyStruct: std::fmt::Display`
-   | doesn't satisfy `MyStruct: std::string::ToString`
 ...
 17 | #[derive(StructConf)]
    |          ^^^^^^^^^^ method not found in `MyStruct`
    |
    = note: the method `to_string` exists but the following trait bounds were not satisfied:
            `MyStruct: std::fmt::Display`
-           which is required by `MyStruct: std::string::ToString`
+           which is required by `MyStruct: ToString`
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
