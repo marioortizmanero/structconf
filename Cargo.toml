@@ -23,4 +23,4 @@ thiserror = "1.0.20"
 trybuild = { version = "1.0", features = ["diff"] }
 dirs = "3.0.0"
 strum = "0.20.0"
-strum_macros = "0.20.1"
+strum_macros = "0.21.1"
