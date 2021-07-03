@@ -6,8 +6,8 @@ edition = "2018"
 
 documentation = "https://docs.rs/structconf/"
 description = "Derive macro for structconf"
-homepage = "https://github.com/vidify/structconf"
-repository = "https://github.com/vidify/structconf"
+homepage = "https://github.com/marioortizmanero/structconf"
+repository = "https://github.com/marioortizmanero/structconf"
 keywords = ["config", "configuration", "settings", "clap", "rust-ini"]
 categories = ["config"]
 license = "MIT"

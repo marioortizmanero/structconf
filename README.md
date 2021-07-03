@@ -3,12 +3,12 @@
 <h1>StructConf</h1>
 <span><i>Combine argument parsing with a config file at compile time.</i></span>
 
-<a href="https://github.com/vidify/structconf/actions"><img alt="Build Status" src="https://github.com/vidify/structconf/workflows/Continuous%20Integration/badge.svg"></a> <a alt="crates.io version" href="https://crates.io/crates/structconf"><img src="https://img.shields.io/crates/v/structconf.svg"></a> <a href="https://docs.rs/structconf"><img alt="docs.rs version" src="https://docs.rs/structconf/badge.svg"></a>
+<a href="https://github.com/marioortizmanero/structconf/actions"><img alt="Build Status" src="https://github.com/marioortizmanero/structconf/workflows/Continuous%20Integration/badge.svg"></a> <a alt="crates.io version" href="https://crates.io/crates/structconf"><img src="https://img.shields.io/crates/v/structconf.svg"></a> <a href="https://docs.rs/structconf"><img alt="docs.rs version" src="https://docs.rs/structconf/badge.svg"></a>
 </div>
 
 ---
 
-StructConf is a small derive macro that allows you to combine argument parsing from [clap](https://github.com/clap-rs/clap) and config file parsing from [rust-ini](https://github.com/zonyitoo/rust-ini) at compile time. It's inspired by the argument parser [structopt](https://github.com/TeXitoi/structopt), and developed to be used in [Vidify](https://github.com/vidify).
+StructConf is a small derive macro that allows you to combine argument parsing from [clap](https://github.com/clap-rs/clap) and config file parsing from [rust-ini](https://github.com/zonyitoo/rust-ini) at compile time. It's inspired by the argument parser [structopt](https://github.com/TeXitoi/structopt).
 
 StructConf aims to be relatively small and simple. Here are its current selling points:
 

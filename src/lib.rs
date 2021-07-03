@@ -2,7 +2,7 @@
 //! [clap](https://docs.rs/clap/) and config file parsing from [rust-ini](
 //! https://docs.rs/rust-ini/) at compile time. Here's a very simple example (see
 //! more detailed examples on [the GitHub repo](
-//! https://github.com/vidify/structconf/tree/master/examples)):
+//! https://github.com/marioortizmanero/structconf/tree/master/examples)):
 //!
 //! ```rust
 //! use structconf::{clap, StructConf};
