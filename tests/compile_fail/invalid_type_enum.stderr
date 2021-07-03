@@ -3,3 +3,11 @@ error: expected `:`, found `,`
   |
 5 |     A,
   |      ^ expected `:`
+
+error: proc-macro derive panicked
+ --> $DIR/invalid_type_enum.rs:3:10
+  |
+3 | #[derive(StructConf)]
+  |          ^^^^^^^^^^
+  |
+  = help: message: called `Result::unwrap()` on an `Err` value: Error("expected `:`")

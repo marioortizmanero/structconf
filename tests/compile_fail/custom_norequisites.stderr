@@ -32,7 +32,7 @@ error[E0277]: the trait bound `MyStruct: Default` is not satisfied
    = note: required by `std::default::Default::default`
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error[E0599]: no method named `to_string` found for enum `MyEnum` in the current scope
+error[E0599]: the method `to_string` exists for enum `MyEnum`, but its trait bounds were not satisfied
   --> $DIR/custom_norequisites.rs:17:10
    |
 6  | enum MyEnum {
@@ -43,14 +43,14 @@ error[E0599]: no method named `to_string` found for enum `MyEnum` in the current
    | doesn't satisfy `MyEnum: std::fmt::Display`
 ...
 17 | #[derive(StructConf)]
-   |          ^^^^^^^^^^ method not found in `MyEnum`
+   |          ^^^^^^^^^^ method cannot be called on `MyEnum` due to unsatisfied trait bounds
    |
-   = note: the method `to_string` exists but the following trait bounds were not satisfied:
+   = note: the following trait bounds were not satisfied:
            `MyEnum: std::fmt::Display`
            which is required by `MyEnum: ToString`
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error[E0599]: no method named `to_string` found for struct `MyStruct` in the current scope
+error[E0599]: the method `to_string` exists for struct `MyStruct`, but its trait bounds were not satisfied
   --> $DIR/custom_norequisites.rs:17:10
    |
 12 | struct MyStruct {
@@ -61,9 +61,9 @@ error[E0599]: no method named `to_string` found for struct `MyStruct` in the cur
    | doesn't satisfy `MyStruct: std::fmt::Display`
 ...
 17 | #[derive(StructConf)]
-   |          ^^^^^^^^^^ method not found in `MyStruct`
+   |          ^^^^^^^^^^ method cannot be called on `MyStruct` due to unsatisfied trait bounds
    |
-   = note: the method `to_string` exists but the following trait bounds were not satisfied:
+   = note: the following trait bounds were not satisfied:
            `MyStruct: std::fmt::Display`
            which is required by `MyStruct: ToString`
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
