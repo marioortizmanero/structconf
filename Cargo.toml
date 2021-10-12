@@ -22,5 +22,5 @@ thiserror = "1.0.26"
 [dev-dependencies]
 trybuild = { version = "1.0.42", features = ["diff"] }
 dirs = "3.0.2"
-strum = "0.21.0"
+strum = "0.22.0"
 strum_macros = "0.21.1"
