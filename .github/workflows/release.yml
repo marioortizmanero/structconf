@@ -6,22 +6,6 @@ on:
       - 'v*'
 
 jobs:
-  release:
-      name: Upload Assets
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v2
-
-        - name: Get the tag name
-          id: tag-name
-          uses: olegtarasov/get-tag@v2
-
-        - name: Creating GitHub release
-          uses: softprops/action-gh-release@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   crates:
       name: Upload to Crates.io
       runs-on: ubuntu-latest
