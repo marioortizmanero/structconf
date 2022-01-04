@@ -7,6 +7,8 @@
 //! It includes custom types with `FromStr` and `ToString`, which are
 //! automatically derived with the crate `strum`.
 
+#![allow(dead_code)]
+
 use strum_macros::{Display, EnumString};
 
 #[derive(Debug, Display, EnumString)]

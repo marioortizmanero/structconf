@@ -14,13 +14,13 @@ license = "MIT"
 readme = "README.md"
 
 [dependencies]
-clap = "2.33.3"
+clap = { version = "3.0", features = ["cargo"] }
 rust-ini = "0.17.0"
 structconf_derive = { version = "0.4.0", path = "structconf_derive" }
-thiserror = "1.0.26"
+thiserror = "1.0"
 
 [dev-dependencies]
-trybuild = { version = "1.0.42", features = ["diff"] }
-dirs = "3.0.2"
-strum = "0.21.0"
-strum_macros = "0.21.1"
+trybuild = { version = "1.0", features = ["diff"] }
+dirs = "4.0"
+strum = "0.23"
+strum_macros = "0.23"

@@ -137,11 +137,11 @@ pub trait StructConf {
     /// file location.
     ///
     /// This is equivalent to `parse_args_from(..., &mut std::env::args())`.
-    fn parse_args<'a>(app: clap::App<'a, 'a>) -> clap::ArgMatches<'a>;
+    fn parse_args(app: clap::App) -> clap::ArgMatches;
 
     /// Parses only the arguments with [clap](
     /// https://docs.rs/clap/2.33.1/clap/) from an iterator.
-    fn parse_args_from<'a, I, T>(app: clap::App<'a, 'a>, iter: I) -> clap::ArgMatches<'a>
+    fn parse_args_from<I, T>(app: clap::App, iter: I) -> clap::ArgMatches
     where
         I: IntoIterator<Item = T>,
         T: Into<OsString> + Clone;
