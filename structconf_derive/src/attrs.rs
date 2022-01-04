@@ -201,7 +201,7 @@ impl Attrs {
                     let second = chars.next();
 
                     match (first, second) {
-                        (Some(ch), None) => Some(ch.to_string()),
+                        (Some(ch), None) => Some(ch),
                         _ => {
                             return Err(Error {
                                 span: self.ident.span(),
@@ -218,7 +218,7 @@ impl Attrs {
                     // Otherwise, the short name is obtained from the
                     // identifier, which must be at least a character
                     // long, so `unwrap()` is used.
-                    Some(ident.chars().next().unwrap().to_string())
+                    Some(ident.chars().next().unwrap())
                 }
             }
         };

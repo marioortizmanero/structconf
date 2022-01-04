@@ -179,8 +179,8 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
 // Looks for conflicts in the options as a whole, like repeated IDs.
 fn check_conflicts(opts: &[Opt]) -> Result<()> {
     let mut files = HashSet::new();
-    let mut longs = HashSet::new();
-    let mut shorts = HashSet::new();
+    let mut longs = HashSet::<String>::new();
+    let mut shorts = HashSet::<char>::new();
 
     macro_rules! try_insert {
         ($iter:expr, $new:expr, $span:expr, $err_id:expr) => {
@@ -188,7 +188,7 @@ fn check_conflicts(opts: &[Opt]) -> Result<()> {
             // of them previously.
             if !$iter.insert($new) {
                 return Err(Error {
-                    kind: ErrorKind::ConflictIDs($err_id.to_string(), $new),
+                    kind: ErrorKind::ConflictIDs($err_id.to_string(), $new.to_string()),
                     span: $span,
                 });
             }
@@ -200,8 +200,8 @@ fn check_conflicts(opts: &[Opt]) -> Result<()> {
         match &opt.kind {
             OptKind::Empty => {}
             OptKind::Flag(arg) | OptKind::Arg(arg) => {
-                if let Some(short) = &arg.short {
-                    try_insert!(shorts, short.clone(), span, "short");
+                if let Some(short) = arg.short {
+                    try_insert!(shorts, short, span, "short");
                 }
                 if let Some(long) = &arg.long {
                     try_insert!(longs, long.clone(), span, "long");

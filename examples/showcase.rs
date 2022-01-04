@@ -3,6 +3,8 @@
 //! flags you'd like to pass, or create `./config.ini` to test out the
 //! config file.
 
+#![allow(dead_code)]
+
 use structconf::{clap, StructConf};
 use strum_macros::{Display, EnumString};
 

@@ -22,7 +22,7 @@ pub struct OptBaseData {
 
 pub struct OptArgData {
     pub long: Option<String>,
-    pub short: Option<String>,
+    pub short: Option<char>,
     pub help: Option<String>,
     pub negated: bool,
 }
@@ -57,7 +57,7 @@ impl Opt {
     pub fn gen_default(&self) -> Result<TokenStream2> {
         match &self.base.default {
             Some(expr) => {
-                let expr = syn::parse_str::<Expr>(&expr)?;
+                let expr = syn::parse_str::<Expr>(expr)?;
 
                 if self.base.is_option {
                     Ok(quote! { ::std::option::Option::Some(#expr) })

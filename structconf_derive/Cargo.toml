@@ -19,5 +19,5 @@ proc-macro = true
 [dependencies]
 syn = { version = "1.0" }
 quote = "1.0"
-proc-macro2 = "1.0.18"
-darling = "0.13.0"
+proc-macro2 = "1.0"
+darling = "0.13"
