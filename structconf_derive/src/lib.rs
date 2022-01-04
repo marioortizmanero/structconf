@@ -118,19 +118,19 @@ fn impl_conf_macro(name: &Ident, fields: FieldsNamed) -> Result<TokenStream> {
                 #name::parse_file(&args, path)
             }
 
-            fn parse_args<'a>(
-                app: ::structconf::clap::App<'a, 'a>
-            ) -> ::structconf::clap::ArgMatches<'a> {
+            fn parse_args(
+                app: ::structconf::clap::App
+            ) -> ::structconf::clap::ArgMatches {
                 #name::parse_args_from(
                     app,
                     &mut ::std::env::args()
                 )
             }
 
-            fn parse_args_from<'a, I, T>(
-                app: ::structconf::clap::App<'a, 'a>,
+            fn parse_args_from<I, T>(
+                app: ::structconf::clap::App,
                 iter: I,
-            ) -> ::structconf::clap::ArgMatches<'a>
+            ) -> ::structconf::clap::ArgMatches
                 where
                     I: ::std::iter::IntoIterator<Item = T>,
                     T: ::std::convert::Into<::std::ffi::OsString>
