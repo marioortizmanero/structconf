@@ -20,4 +20,4 @@ proc-macro = true
 syn = { version = "1.0" }
 quote = "1.0"
 proc-macro2 = "1.0"
-darling = "0.13"
+darling = "0.14"
